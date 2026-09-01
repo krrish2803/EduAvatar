@@ -1,0 +1,29 @@
+# Environment variables
+.env
+
+# Node modules
+node_modules/
+
+# Uploads (user-generated content)
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Runtime
+dist/
+build/
+
+# Patch and test files
+patch*.py
+test*.py
+fix*.py
+update*.py
+server_mock.js
+server_test.js
+generate_pitch_video.js
+eduavatar_pitch.mp4

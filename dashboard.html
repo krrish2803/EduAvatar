@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - EduAvatar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { background: var(--clr-bg-main); color: white; display: flex; min-height: 100vh; }
+
+        /* Sidebar styling */
+        .sidebar { width: 250px; background: var(--clr-bg-card); border-right: 1px solid rgba(255,255,255,0.05); padding: 2rem 1.5rem; display: flex; flex-direction: column; }
+        .brand { font-size: 1.25rem; font-weight: 800; color: white; margin-bottom: 3rem; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 12px 16px; color: var(--clr-text-muted); text-decoration: none; border-radius: 8px; margin-bottom: 0.5rem; font-weight: 500; display: flex; align-items: center; gap: 12px; transition: all 0.2s; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: rgba(124,58,237,0.1); color: white; }
+        .nav-item.active { border-left: 3px solid var(--clr-accent); }
+
+        /* Main Content */
+        .main-content { flex: 1; padding: 3rem; overflow-y: auto; position: relative; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; }
+        .user-profile { display: flex; align-items: center; gap: 1rem; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--grad-btn); display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        /* Tab Views */
+        .tab-view { display: none; animation: fadeIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .tab-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Dashboard Grid */
+        .dash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--clr-bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-card h4 { color: var(--clr-text-muted); font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .stat-card .value { font-size: 2rem; font-weight: 700; color: white; }
+
+        /* Recent Activity / Lessons */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; margin-top: 3rem; }
+        .lesson-card { background: var(--clr-bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; transition: 0.2s; }
+        .lesson-card:hover { transform: translateX(5px); border-color: rgba(6,182,212,0.5); }
+        .lesson-info h4 { margin-bottom: 0.25rem; color: white; }
+        .lesson-info p { font-size: 0.85rem; margin: 0; color: var(--clr-text-muted); }
+
+        .logout-btn { margin-top: auto; color: #ef4444; }
+        .logout-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+        /* Settings Forms */
+        .settings-card { background: var(--clr-bg-card); padding: 2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--clr-text-muted); font-size: 0.9rem; }
+        .form-input { width: 100%; max-width: 400px; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-size: 1rem; outline: none; transition: 0.2s; }
+        .form-input:focus { border-color: var(--clr-highlight); }
+        .chart-placeholder { width: 100%; height: 300px; background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.1)); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: var(--clr-text-muted); font-family: var(--font-accent); }
+
+        /* Upload Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-content {
+            background: var(--clr-bg-card); width: 100%; max-width: 550px;
+            border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);
+            padding: 2.5rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-header h3 { color: white; margin: 0; font-size: 1.4rem; }
+        .close-btn { background: none; border: none; color: var(--clr-text-muted); font-size: 2rem; cursor: pointer; transition: 0.2s; line-height: 1; }
+        .close-btn:hover { color: white; transform: scale(1.1); }
+        
+        .upload-dropzone {
+            border: 2px dashed rgba(255,255,255,0.2); border-radius: 12px;
+            padding: 2.5rem 2rem; text-align: center; background: rgba(0,0,0,0.2);
+            transition: all 0.2s; cursor: pointer;
+        }
+        .upload-dropzone:hover, .upload-dropzone.dragover { border-color: var(--clr-highlight); background: rgba(6,182,212,0.05); }
+        .upload-dropzone p { color: white; font-weight: 600; margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+        .upload-dropzone span { display: block; color: var(--clr-text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+        
+        .or-divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; color: var(--clr-text-muted); font-size: 0.85rem; font-weight: 600; }
+        .or-divider::before, .or-divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .or-divider span { padding: 0 15px; }
+
+        .uploaded-file-list {
+            margin-top: 1rem; text-align: left;
+        }
+        .file-item {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 8px;
+            margin-bottom: 0.5rem; font-size: 0.9rem;
+        }
+        .file-item .remove-file { color: #ef4444; cursor: pointer; font-weight: bold; }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:false, theme: "dark"});</script>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            EduAvatar
+        </div>
+        
+        <a class="nav-item active" data-target="view-overview" data-title="Overview" data-subtitle="Welcome back, Krrish! Here is your learning overview.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            Overview
+        </a>
+        <a class="nav-item" data-target="view-lessons" data-title="My Lessons" data-subtitle="Track your progress and resume past lessons.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            My Lessons
+        </a>
+        <a class="nav-item" data-target="view-visuals" data-title="Visual Designer" data-subtitle="Automatically generate optimal teaching visuals.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            Visual Designer
+        </a>
+        <a class="nav-item" data-target="view-director" data-title="Video Studio" data-subtitle="Generate highly detailed storyboard scripts for the AI Video Engine.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+            Video Studio
+        </a>
+        <a class="nav-item" data-target="view-diagram" data-title="Interactive Diagram" data-subtitle="Design step-by-step revealable diagrams for teaching complex concepts.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            Interactive Diagram
+        </a>
+        <a class="nav-item" data-target="view-curriculum" data-title="Topic Learning" data-subtitle="Build a personalized curriculum from scratch.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            Topic Learning
+        </a>
+        <a class="nav-item" data-target="view-study-plan" data-title="Study Planner" data-subtitle="Generate a personalized daily study schedule.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Study Planner
+        </a>
+        <a class="nav-item" data-target="view-revision" data-title="Revision Mode" data-subtitle="Review weak concepts with flashcards and diagnostics.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+            Revision Mode
+        </a>
+        <a class="nav-item" data-target="view-concept-map" data-title="Concept Map" data-subtitle="Visualize hierarchical relationships between concepts.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            Concept Map
+        </a>
+        <a class="nav-item" data-target="view-coding" data-title="Coding Demo" data-subtitle="Step-by-step code demonstrations with explanations.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            Coding Demo
+        </a>
+        <a class="nav-item" data-target="view-avatar" data-title="Avatar Studio" data-subtitle="Generate AI teacher avatar videos with TTS.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+            Avatar Studio
+        </a>
+        <a class="nav-item" data-target="view-chat" data-title="AI Chat" data-subtitle="Ask questions about your uploaded documents.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            AI Chat
+        </a>
+        <a class="nav-item" data-target="view-analytics" data-title="Analytics" data-subtitle="Detailed insights into your learning performance.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+            Analytics
+        </a>
+        <a class="nav-item" data-target="view-settings" data-title="Settings" data-subtitle="Manage your profile and preferences.">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Settings
+        </a>
+
+        <a href="/index.html" class="nav-item logout-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            Sign Out
+        </a>
+    </aside>
+
+    <!-- Main Dashboard -->
+    <main class="main-content">
+        <div class="top-bar">
+            <div>
+                <h1 id="page-title" style="font-size: 2rem;">Overview</h1>
+                <p id="page-subtitle" style="color: var(--clr-text-muted);">Welcome back, Krrish! Here is your learning overview.</p>
+            </div>
+            <div class="user-profile">
+                <!-- NEW UPLOAD BUTTON -->
+                <button id="btn-upload" class="cta-btn primary-btn pulse-glow" style="padding: 10px 20px; font-size: 0.9rem;">+ Upload Material / New Lesson</button>
+                <div class="avatar" title="Krrish">KR</div> 
+            </div>
+        </div>
+
+        <!-- 1. STUDENT LEARNING PROFILE VIEW -->
+        <div id="view-overview" class="tab-view active">
+            
+            <!-- Profile Header -->
+            <div class="profile-header" style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(124,58,237,0.1)); border-radius: 16px; border: 1px solid rgba(124,58,237,0.2);">
+                <div id="profile-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent)); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 900; color: white; box-shadow: 0 10px 25px rgba(99,102,241,0.4);">KR</div>
+                <div style="flex: 1;">
+                    <h2 id="profile-name" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 700;">Student Learning Profile</h2>
+                    <div id="profile-meta" style="display: flex; gap: 1.5rem; color: var(--clr-text-muted); font-size: 0.95rem;">
+                        <span>📊 Level: <strong id="profile-level">Intermediate</strong></span>
+                        <span>🌐 Language: <strong id="profile-lang">English</strong></span>
+                        <span>⚡ Pace: <strong id="profile-pace">Adaptive</strong></span>
+                        <span>📅 Last Session: <strong id="profile-last-session">Never</strong></span>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 2rem; font-weight: 900; color: var(--clr-primary);" id="profile-overall-grade">--</div>
+                    <div style="font-size: 0.85rem; color: #94a3b8;">Overall Grade</div>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="dash-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+                <div class="stat-card" style="border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(30,30,40,0.8), rgba(20,20,25,0.9)); padding: 1.2rem;">
+                    <h4 style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">TOPICS STUDIED</h4>
+                    <div class="value" id="stat-topics" style="font-size: 1.8rem;">0</div>
+                </div>
+                <div class="stat-card" style="border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(30,30,40,0.8), rgba(20,20,25,0.9)); padding: 1.2rem;">
+                    <h4 style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">COMPLETED</h4>
+                    <div class="value" id="stat-completed" style="font-size: 1.8rem; color: #10b981;">0</div>
+                </div>
+                <div class="stat-card" style="border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(30,30,40,0.8), rgba(20,20,25,0.9)); padding: 1.2rem;">
+                    <h4 style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">IN PROGRESS</h4>
+                    <div class="value" id="stat-inprogress" style="font-size: 1.8rem; color: #f59e0b;">0</div>
+                </div>
+                <div class="stat-card" style="border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(30,30,40,0.8), rgba(20,20,25,0.9)); padding: 1.2rem;">
+                    <h4 style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">AVG. SCORE</h4>
+                    <div class="value" id="stat-score" style="font-size: 1.8rem;">0<span style="font-size: 1rem; color: #64748b;">/100</span></div>
+                </div>
+                <div class="stat-card" style="border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(30,30,40,0.8), rgba(20,20,25,0.9)); padding: 1.2rem;">
+                    <h4 style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">TOTAL TIME</h4>
+                    <div class="value" id="stat-time" style="font-size: 1.8rem;">0<span style="font-size: 1rem; color: #64748b;"> min</span></div>
+                </div>
+                <div class="stat-card" style="border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(30,30,40,0.8), rgba(20,20,25,0.9)); padding: 1.2rem;">
+                    <h4 style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">SESSIONS</h4>
+                    <div class="value" id="stat-sessions" style="font-size: 1.8rem;">0</div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                
+                <!-- LEFT COLUMN -->
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+
+                    <!-- Progress Overview -->
+                    <div class="content-card" style="background: rgba(20,20,30,0.5); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);">
+                        <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                            📈 Progress Overview
+                        </h3>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="color: #94a3b8; font-size: 0.9rem;">Overall Completion</span>
+                                <span style="color: var(--clr-text); font-weight: bold;" id="progress-pct">0%</span>
+                            </div>
+                            <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;">
+                                <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--clr-primary), var(--clr-accent)); border-radius: 5px; transition: width 0.5s;"></div>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div style="background: rgba(16,185,129,0.1); padding: 0.8rem; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #10b981;" id="progress-completed">0</div>
+                                <div style="font-size: 0.8rem; color: #94a3b8;">Completed</div>
+                            </div>
+                            <div style="background: rgba(245,158,11,0.1); padding: 0.8rem; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #f59e0b;" id="progress-inprogress">0</div>
+                                <div style="font-size: 0.8rem; color: #94a3b8;">In Progress</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Strong Concepts -->
+                    <div class="content-card" style="background: rgba(20,20,30,0.5); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);">
+                        <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                            💪 Strong Concepts
+                        </h3>
+                        <div id="real-strong-concepts" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <span style="color: #64748b; font-size: 0.85rem;">Complete lessons to see your strengths.</span>
+                        </div>
+                    </div>
+
+                    <!-- Weak Concepts -->
+                    <div class="content-card" style="background: rgba(20,20,30,0.5); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);">
+                        <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                            🎯 Weak Concepts (Needs Review)
+                        </h3>
+                        <div id="real-weak-concepts" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <span style="color: #64748b; font-size: 0.85rem;">No weak concepts identified yet.</span>
+                        </div>
+                    </div>
+
+                    <!-- Misconceptions -->
+                    <div class="content-card" style="background: rgba(20,20,30,0.5); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);">
+                        <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                            ⚠️ Recurring Misconceptions
+                        </h3>
+                        <div id="real-misconceptions" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <span style="color: #64748b; font-size: 0.85rem;">No misconceptions recorded.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN -->
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+
+                    <!-- Current Learning Path -->
+                    <div class="content-card" style="background: rgba(20,20,30,0.5); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);">
+                        <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                            🛤️ Current Learning Path
+                        </h3>
+                        <!-- Active / In Progress Banner -->
+                        <div id="in-progress-banner" style="background: linear-gradient(90deg, rgba(99,102,241,0.15), rgba(124,58,237,0.15)); border: 1px solid rgba(124,58,237,0.3); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="background: var(--clr-primary); color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">In Progress</span>
+                                    <h4 id="in-progress-title" style="color: var(--clr-text); font-size: 1.05rem; margin: 0.5rem 0 0.2rem 0;">No Active Lesson</h4>
+                                    <p id="in-progress-pct" style="color: #94a3b8; font-size: 0.85rem; margin: 0;">Start a new topic to see progress here.</p>
+                                </div>
+                                <button id="in-progress-btn" class="cta-btn primary-btn" style="padding: 8px 16px; font-size: 0.85rem; opacity: 0.5; cursor: not-allowed;" disabled>Resume</button>
+                            </div>
+                        </div>
+                        <!-- Learning Path Timeline -->
+                        <div id="real-learning-path" style="position: relative; padding-left: 32px; max-height: 300px; overflow-y: auto;">
+                            <div style="position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.1);"></div>
+                            <div style="color: #64748b; font-size: 0.9rem; text-align: center; margin-top: 1rem;">Complete lessons to build your learning path.</div>
+                        </div>
+                    </div>
+
+                    <!-- Topics Studied (Detailed Table) -->
+                    <div class="content-card" style="background: rgba(20,20,30,0.5); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); flex: 1;">
+                        <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                            📋 Topics Studied
+                        </h3>
+                        <div id="topics-table" style="overflow-y: auto; max-height: 350px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: #64748b; text-align: left;">
+                                        <th style="padding: 0.6rem 0.5rem;">Topic</th>
+                                        <th style="padding: 0.6rem 0.5rem;">Score</th>
+                                        <th style="padding: 0.6rem 0.5rem;">Time</th>
+                                        <th style="padding: 0.6rem 0.5rem;">Date</th>
+                                        <th style="padding: 0.6rem 0.5rem;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topics-tbody">
+                                    <tr><td colspan="5" style="padding: 1rem; text-align: center; color: #64748b;">No topics studied yet.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Learning History (Full Width) -->
+            <div class="content-card" style="background: rgba(20,20,30,0.5); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                    📜 Learning History
+                </h3>
+                <div id="real-learning-history" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 400px; overflow-y: auto; padding-right: 10px;" class="custom-scrollbar">
+                    <div style="color: #64748b; font-size: 0.9rem; text-align: center; margin-top: 1rem;">Your learning history is empty. Start a lesson to begin tracking.</div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+            </div>
+        </div>
+<!-- 2. MY LESSONS VIEW -->
+        <div id="view-lessons" class="tab-view">
+            <div class="lesson-list">
+                <div class="lesson-card">
+                    <div class="lesson-info">
+                        <h4>Introduction to Python Loops</h4>
+                        <p>Level: Beginner • 65% Completed</p>
+                    </div>
+                    <button class="cta-btn secondary-btn" style="padding: 8px 16px; font-size: 0.9rem;">Resume</button>
+                </div>
+                <div class="lesson-card">
+                    <div class="lesson-info">
+                        <h4>Machine Learning: Gradient Descent</h4>
+                        <p>Level: Intermediate • Not Started</p>
+                    </div>
+                    <button class="cta-btn secondary-btn" style="padding: 8px 16px; font-size: 0.9rem;">Start</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISUAL DESIGNER VIEW -->
+        <div id="view-visuals" class="tab-view">
+            <div class="settings-card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem;">Subject-Aware Visual Designer</h3>
+                <p style="color: var(--clr-text-muted); margin-bottom: 1.5rem;">Enter a concept, and the AI will analyze the subject and architect the perfect visual representation for the whiteboard.</p>
+                <div style="display: flex; gap: 1rem;">
+                    <input type="text" id="visuals-input" class="form-input" style="max-width: 100%; flex: 1;" placeholder="e.g., 'Mitochondria (Biology)' or 'Binary Search (Computer Science)'">
+                    <button id="btn-build-visuals" class="cta-btn primary-btn pulse-glow" style="padding: 10px 24px; white-space: nowrap;">Design Visual</button>
+                </div>
+            </div>
+
+            <div id="visuals-result" style="display: none; animation: fadeIn 0.5s ease-out;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="color: var(--clr-highlight);">Generated Visual Blueprint</h3>
+                    <div style="background: rgba(6, 182, 212, 0.1); color: var(--clr-highlight); padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 0.85rem;">Format: JSON Engine Output</div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    
+                    <!-- Visual Card -->
+                    <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden;">
+                        
+                        <div style="background: rgba(255,255,255,0.02); padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--clr-text-muted);">Subject: Biology</span>
+                                <h4 style="color: white; margin-top: 4px; font-size: 1.1rem;">Concept: The Mitochondria</h4>
+                            </div>
+                            <span style="background: rgba(124,58,237,0.2); color: #a78bfa; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">Type: Labeled Diagram</span>
+                        </div>
+                        
+                        <div style="padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            
+                            <div>
+                                <h4 style="color: var(--clr-highlight); font-size: 0.85rem; margin-bottom: 0.8rem; text-transform: uppercase;">Detailed Description</h4>
+                                <p style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.6;">A high-resolution, cross-sectional illustration of a mitochondrion. The outer membrane is semi-transparent. The inner membrane is heavily folded into cristae, highlighted in glowing cyan. Labels with thin pointer lines identify the 'Matrix', 'Cristae', 'Inner Membrane', and 'Outer Membrane'.</p>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                                    <h4 style="color: var(--clr-highlight); font-size: 0.75rem; margin-bottom: 0.4rem; text-transform: uppercase;">Pedagogical Purpose</h4>
+                                    <p style="font-size: 0.85rem; color: #94a3b8;">Visually defining the internal structure clarifies how the folded cristae increase surface area for ATP production, turning an abstract concept into a spatial reality.</p>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                                    <h4 style="color: var(--clr-highlight); font-size: 0.75rem; margin-bottom: 0.4rem; text-transform: uppercase;">Optimal Placement</h4>
+                                    <p style="font-size: 0.85rem; color: #94a3b8;">Display immediately after the avatar introduces the phrase "powerhouse of the cell", during the structural explanation phase.</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- VIDEO DIRECTOR VIEW -->
+        <div id="view-director" class="tab-view">
+            <div class="settings-card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem;">AI Teaching Video Director</h3>
+                <p style="color: var(--clr-text-muted); margin-bottom: 1.5rem;">Enter a lesson topic to generate a detailed storyboard script (Camera, Emotion, Spoken Text, and Visuals) for the Video AI Engine.</p>
+                <div style="display: flex; gap: 1rem;">
+                    <input type="text" id="director-input" class="form-input" style="max-width: 100%; flex: 1;" placeholder="e.g., 'How Neural Networks Work' or 'Photosynthesis'">
+                    <button id="btn-build-script" class="cta-btn primary-btn pulse-glow" style="padding: 10px 24px; white-space: nowrap;">Generate Script</button>
+                </div>
+            </div>
+
+            <div id="script-result" style="display: none; animation: fadeIn 0.5s ease-out;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="color: var(--clr-highlight);">Generated Video Storyboard</h3>
+                    <div style="background: rgba(124,58,237,0.1); color: var(--clr-accent); padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 0.85rem;">Format: JSON &rarr; Storyboard</div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    
+                    <!-- Segment 1 -->
+                    <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                            <span style="font-weight: bold; color: white;">Segment 1 [00:00 - 00:30]</span>
+                            <span style="color: var(--clr-text-muted); font-size: 0.9rem;">🎥 Medium Shot</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div>
+                                <h4 style="color: var(--clr-highlight); font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase;">Avatar Action</h4>
+                                <p style="font-size: 0.9rem; color: #a78bfa; margin-bottom: 5px;"><strong>Tone:</strong> Enthusiastic / Smiling</p>
+                                <p style="font-size: 0.95rem; font-style: italic; color: white;">"Namaste! Today we are diving into something incredibly fascinating: How Neural Networks actually learn. Think of it like teaching a toddler to recognize a cat."</p>
+                            </div>
+                            <div>
+                                <h4 style="color: var(--clr-highlight); font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase;">On-Screen Visuals</h4>
+                                <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 5px;"><strong>Type:</strong> Animation Description</p>
+                                <p style="font-size: 0.9rem; color: #cbd5e1;">A split-screen appears. On the right, a simple graphic of a toddler looking at flashcards of animals. Below it, a high-level glowing diagram of a neural network with nodes lighting up.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Segment 2 -->
+                    <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                            <span style="font-weight: bold; color: white;">Segment 2 [00:30 - 01:15]</span>
+                            <span style="color: var(--clr-text-muted); font-size: 0.9rem;">🎥 Avatar + Content Split Screen</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div>
+                                <h4 style="color: var(--clr-highlight); font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase;">Avatar Action</h4>
+                                <p style="font-size: 0.9rem; color: #a78bfa; margin-bottom: 5px;"><strong>Tone:</strong> Focused / Serious</p>
+                                <p style="font-size: 0.95rem; font-style: italic; color: white;">"The core mechanism here is called Forward Propagation. Let's look at the math. The inputs are multiplied by 'weights' and then passed through an activation function."</p>
+                            </div>
+                            <div>
+                                <h4 style="color: var(--clr-highlight); font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase;">On-Screen Visuals</h4>
+                                <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 5px;"><strong>Type:</strong> Equation & Flowchart</p>
+                                <p style="font-size: 0.9rem; color: #cbd5e1;">Step-by-step equation builds on screen: y = f(Wx + b). Arrows draw connections from 'Inputs' (x) to 'Weights' (W), showing the math in action.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- INTERACTIVE DIAGRAM VIEW -->
+        <div id="view-diagram" class="tab-view">
+            <div class="settings-card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem;">Interactive Diagram Designer</h3>
+                <p style="color: var(--clr-text-muted); margin-bottom: 1.5rem;">Enter a topic and the AI will design a step-by-step revealable diagram — synchronized with narration, using progressive disclosure and highlighting.</p>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <input type="text" id="diagram-input" class="form-input" style="max-width: 100%; flex: 1;" placeholder="e.g., 'How a Neural Network learns' or 'HTTP Request Lifecycle'">
+                    <select id="diagram-type-input" class="form-input" style="width: auto; cursor: pointer; appearance: auto;">
+                        <option value="auto">🔍 Auto-detect Type</option>
+                        <option value="flowchart">📊 Flowchart</option>
+                        <option value="architecture">🏗️ Architecture</option>
+                        <option value="process">⚙️ Process</option>
+                        <option value="labeled illustration">🏷️ Labeled Illustration</option>
+                        <option value="state diagram">🔄 State Diagram</option>
+                    </select>
+                    <button id="btn-build-diagram" class="cta-btn primary-btn pulse-glow" style="padding: 10px 24px; white-space: nowrap;">Design Diagram</button>
+                </div>
+            </div>
+
+            <div id="diagram-result" style="display: none; animation: fadeIn 0.5s ease-out;">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+
+        <!-- CURRICULUM VIEW -->
+        <div id="view-curriculum" class="tab-view">
+            <div class="settings-card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem;">What do you want to learn?</h3>
+                <p style="color: var(--clr-text-muted); margin-bottom: 1.5rem;">Enter any topic without uploading a document, and our AI will design a complete learning structure for you.</p>
+                <div style="display: flex; gap: 1rem;">
+                    <input type="text" id="curriculum-input" class="form-input" style="max-width: 100%; flex: 1;" placeholder="e.g., 'Teach me React for a technical interview'">
+                    <select id="time-limit-input" class="form-input" style="width: auto; cursor: pointer; appearance: auto;">
+                        <option value="5m">⏱️ 5 Mins (Micro)</option>
+                        <option value="20m" selected>⏱️ 20 Mins (Standard)</option>
+                        <option value="60m">⏱️ 60 Mins (Deep)</option>
+                        <option value="7d">📅 7 Days (Plan)</option>
+                    </select>
+                    <button id="btn-build-curriculum" class="cta-btn primary-btn pulse-glow" style="padding: 10px 24px; white-space: nowrap;">Build Curriculum</button>
+                </div>
+            </div>
+
+            <div id="curriculum-result" style="display: none; animation: fadeIn 0.5s ease-out;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="color: var(--clr-highlight);">Generated Learning Path</h3>
+                    <div style="background: rgba(6,182,212,0.1); color: var(--clr-highlight); padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 0.85rem;">Est. Time: 4 Hours</div>
+                </div>
+                
+                <!-- Timeline Mock -->
+                <div style="position: relative; padding-left: 30px; margin-bottom: 3rem;">
+                    <div style="position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.1);"></div>
+                    
+                    <div style="position: relative; margin-bottom: 2rem;">
+                        <div style="position: absolute; left: -31px; top: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--clr-highlight); border: 4px solid var(--clr-bg-main);"></div>
+                        <div class="lesson-card" style="margin: 0;">
+                            <div class="lesson-info">
+                                <h4 style="color: var(--clr-highlight);">Module 1: Fundamentals of AI</h4>
+                                <p>Time: 45 mins • Difficulty: Beginner</p>
+                                <p style="margin-top: 8px;">Key Concepts: Definition of AI, History, Difference between AI, ML, and Deep Learning.</p>
+                            </div>
+                            <button class="cta-btn primary-btn" onclick="window.location.href='/lesson.html'" style="padding: 8px 16px; font-size: 0.9rem;">Start Module</button>
+                        </div>
+                    </div>
+
+                    <div style="position: relative; margin-bottom: 2rem;">
+                        <div style="position: absolute; left: -31px; top: 0; width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 4px solid var(--clr-bg-main);"></div>
+                        <div class="lesson-card" style="margin: 0; opacity: 0.7;">
+                            <div class="lesson-info">
+                                <h4>Module 2: Neural Networks & How they learn</h4>
+                                <p>Time: 90 mins • Difficulty: Intermediate</p>
+                                <p style="margin-top: 8px;">Key Concepts: Nodes, Weights, Biases, Activation Functions, Forward Propagation.</p>
+                            </div>
+                            <button class="cta-btn secondary-btn" style="padding: 8px 16px; font-size: 0.9rem; border-color: rgba(255,255,255,0.2); color: white;" disabled>Locked</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capstone & Revision Strategy -->
+                <div style="background: rgba(124, 58, 237, 0.1); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 12px; padding: 1.5rem; margin-top: 1rem; margin-bottom: 2rem;">
+                    <h4 style="color: var(--clr-highlight); margin-bottom: 0.5rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                        🏆 Final Capstone Project
+                    </h4>
+                    <p style="color: white; font-size: 0.95rem; margin-bottom: 1.5rem;">Build an End-to-End Image Classification API using PyTorch and FastAPI to demonstrate full mastery of the path.</p>
+                    
+                    <h4 style="color: var(--clr-accent); margin-bottom: 0.5rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                        🧠 Revision Strategy
+                    </h4>
+                    <p style="color: #cbd5e1; font-size: 0.95rem;">Spaced repetition quizzes every 3 days on Math fundamentals, and weekly AI-guided code-reviews for Data Processing scripts.</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 3. ANALYTICS VIEW -->
+        <div id="view-analytics" class="tab-view">
+            
+            <div class="dash-grid" id="analytics-stats-container" style="margin-bottom: 2rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="stat-card" style="border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(30,30,40,0.8), rgba(20,20,25,0.9));">
+                    <h4>Overall Progress</h4>
+                    <div class="value" id="analytics-progress">0% <span style="font-size: 1rem; color: #10b981;">🚀</span></div>
+                </div>
+                <div class="stat-card" style="border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(30,30,40,0.8), rgba(20,20,25,0.9));">
+                    <h4>Avg. Assessment Score</h4>
+                    <div class="value" id="analytics-score">0<span style="font-size: 1.2rem; color: var(--clr-text-muted);">/100</span></div>
+                </div>
+                <div class="stat-card" style="border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(30,30,40,0.8), rgba(20,20,25,0.9));">
+                    <h4>Topics Studied</h4>
+                    <div class="value" id="analytics-topics">0 <span style="font-size: 1rem; color: #f59e0b;">📚</span></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- STUDY PLANNER VIEW -->
+        <div id="view-study-plan" class="tab-view">
+            <div style="max-width: 800px;">
+                <h3 style="margin-bottom: 1.5rem; color: var(--clr-text);">📅 Generate Study Plan</h3>
+                <div class="settings-card" style="margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label>Topic</label>
+                        <input type="text" id="sp-topic" class="form-input" placeholder="e.g. Machine Learning, Data Structures">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Duration (days)</label>
+                            <input type="number" id="sp-days" class="form-input" value="7" min="1" max="30">
+                        </div>
+                        <div class="form-group">
+                            <label>Daily Time (minutes)</label>
+                            <input type="number" id="sp-time" class="form-input" value="30" min="10" max="180">
+                        </div>
+                    </div>
+                    <button id="btn-generate-plan" class="cta-btn primary-btn pulse-glow" style="width: 100%; padding: 12px;">Generate Study Plan</button>
+                </div>
+                <div id="sp-result"></div>
+            </div>
+        </div>
+
+        <!-- REVISION MODE VIEW -->
+        <div id="view-revision" class="tab-view">
+            <div style="max-width: 800px;">
+                <h3 style="margin-bottom: 1.5rem; color: var(--clr-text);">🔄 Revision Session</h3>
+                <div class="settings-card" style="margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label>Topic (optional — leave empty for weak areas)</label>
+                        <input type="text" id="rev-topic" class="form-input" placeholder="e.g. Neural Networks, Calculus">
+                    </div>
+                    <button id="btn-start-revision" class="cta-btn primary-btn pulse-glow" style="width: 100%; padding: 12px;">Start Revision Session</button>
+                </div>
+                <div id="rev-result"></div>
+            </div>
+        </div>
+
+        <!-- CONCEPT MAP VIEW -->
+        <div id="view-concept-map" class="tab-view">
+            <div style="max-width: 800px;">
+                <h3 style="margin-bottom: 1.5rem; color: var(--clr-text);">🗺️ Concept Map Generator</h3>
+                <div class="settings-card" style="margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label>Topic</label>
+                        <input type="text" id="cm-topic" class="form-input" placeholder="e.g. Machine Learning, Cell Biology">
+                    </div>
+                    <div class="form-group">
+                        <label>Depth (levels)</label>
+                        <input type="number" id="cm-depth" class="form-input" value="3" min="2" max="5">
+                    </div>
+                    <button id="btn-generate-concept-map" class="cta-btn primary-btn pulse-glow" style="width: 100%; padding: 12px;">Generate Concept Map</button>
+                </div>
+                <div id="cm-result"></div>
+            </div>
+        </div>
+
+        <!-- CODING DEMO VIEW -->
+        <div id="view-coding" class="tab-view">
+            <div style="max-width: 800px;">
+                <h3 style="margin-bottom: 1.5rem; color: var(--clr-text);">💻 Coding Demonstration</h3>
+                <div class="settings-card" style="margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label>Topic / Problem</label>
+                        <input type="text" id="cd-topic" class="form-input" placeholder="e.g. Binary Search, Sorting Algorithms">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Programming Language</label>
+                            <select id="cd-lang" class="form-input">
+                                <option value="Python">Python</option>
+                                <option value="JavaScript">JavaScript</option>
+                                <option value="Java">Java</option>
+                                <option value="C++">C++</option>
+                                <option value="Go">Go</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Student Level</label>
+                            <select id="cd-level" class="form-input">
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate" selected>Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="btn-generate-coding" class="cta-btn primary-btn pulse-glow" style="width: 100%; padding: 12px;">Generate Coding Demo</button>
+                </div>
+                <div id="cd-result"></div>
+            </div>
+        </div>
+
+        <!-- AVATAR STUDIO VIEW -->
+        <div id="view-avatar" class="tab-view">
+            <div style="max-width: 800px;">
+                <h3 style="margin-bottom: 1.5rem; color: var(--clr-text);">🎬 Avatar Video Generator</h3>
+                <div class="settings-card" style="margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label>Text for Avatar to Speak</label>
+                        <textarea id="av-text" class="form-input" rows="4" placeholder="Enter the text the AI teacher should speak..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Voice</label>
+                        <select id="av-voice" class="form-input">
+                            <option value="en-female">English - Female</option>
+                            <option value="en-male">English - Male</option>
+                            <option value="hi-female">Hindi - Female</option>
+                            <option value="hi-male">Hindi - Male</option>
+                            <option value="es-female">Spanish - Female</option>
+                            <option value="fr-female">French - Female</option>
+                        </select>
+                    </div>
+                    <button id="btn-generate-avatar" class="cta-btn primary-btn pulse-glow" style="width: 100%; padding: 12px;">Generate Avatar Video</button>
+                </div>
+                <div id="av-result"></div>
+            </div>
+        </div>
+
+        <!-- AI CHAT VIEW -->
+        <div id="view-chat" class="tab-view">
+            <div style="max-width: 800px; display: flex; flex-direction: column; height: calc(100vh - 200px);">
+                <div id="chat-status-bar" style="padding: 12px 16px; background: var(--clr-bg-card); border-radius: 10px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <span style="font-size: 1.2rem;">📚</span>
+                    <span id="chat-doc-status" style="color: var(--clr-text-muted); font-size: 0.9rem;">Loading documents...</span>
+                    <select id="chat-doc-select" style="margin-left: auto; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; max-width: 300px;">
+                        <option value="">Select a document...</option>
+                    </select>
+                </div>
+                <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 1rem; background: var(--clr-bg-card); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 1rem;">
+                    <div style="text-align: center; color: var(--clr-text-muted); padding: 3rem 1rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">💬</div>
+                        <h3 style="color: var(--clr-text); margin-bottom: 0.5rem;">Ask Anything</h3>
+                        <p>Select a document above, then ask questions about it.</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="chat-input" class="form-input" placeholder="Ask a question about your document..." style="flex: 1;" disabled>
+                    <button id="chat-send-btn" class="cta-btn primary-btn" style="padding: 12px 24px; white-space: nowrap;" disabled>
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. SETTINGS VIEW -->
+        <div id="view-settings" class="tab-view">
+            <div class="settings-card">
+                <h3 style="margin-bottom: 1.5rem;">Profile Information</h3>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" class="form-input" value="Krrish" readonly>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- UPLOAD MODAL -->
+    <div id="upload-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New AI Lesson</h3>
+                <button id="close-modal" class="close-btn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Dropzone for files -->
+                <div class="upload-dropzone" id="dropzone">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--clr-highlight)" stroke-width="1.5" style="margin-bottom: 10px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>Drag & Drop your learning materials here</p>
+                    <span>Supports PDF, DOCX, PPTX, TXT, Books & Notes</span>
+                    
+                    <input type="file" id="file-upload" multiple hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.txt">
+                    <button class="cta-btn secondary-btn" onclick="document.getElementById('file-upload').click()" style="padding: 8px 16px; font-size: 0.9rem;">Browse Files</button>
+                    
+                    <div class="uploaded-file-list" id="file-list"></div>
+                </div>
+
+                <div class="or-divider"><span>OR</span></div>
+
+                <!-- Topic Input -->
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Learn a Topic Directly (No file needed)</label>
+                    <input type="text" id="topic-input" class="form-input" style="max-width: 100%;" placeholder="e.g. Quantum Physics, React Framework, Newton's Laws...">
+                </div>
+
+                <button class="cta-btn primary-btn pulse-glow" style="width: 100%; margin-top: 2rem;" id="btn-generate">Generate Lesson</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        // ========== Tab Switching ==========
+        const navItems = document.querySelectorAll('.nav-item[data-target]');
+        const tabViews = document.querySelectorAll('.tab-view');
+        const pageTitle = document.getElementById('page-title');
+        const pageSubtitle = document.getElementById('page-subtitle');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                tabViews.forEach(view => view.classList.remove('active'));
+                item.classList.add('active');
+                document.getElementById(item.getAttribute('data-target')).classList.add('active');
+                pageTitle.innerText = item.getAttribute('data-title');
+                pageSubtitle.innerText = item.getAttribute('data-subtitle');
+            });
+        });
+
+        // Helper: Switch tab programmatically
+        function switchTab(targetId) {
+            navItems.forEach(nav => {
+                nav.classList.remove('active');
+                if (nav.getAttribute('data-target') === targetId) {
+                    nav.classList.add('active');
+                    pageTitle.innerText = nav.getAttribute('data-title');
+                    pageSubtitle.innerText = nav.getAttribute('data-subtitle');
+                }
+            });
+            tabViews.forEach(view => view.classList.remove('active'));
+            document.getElementById(targetId).classList.add('active');
+        }
+
+        // Helper: Close upload modal
+        function closeUploadModal() {
+            document.getElementById('upload-modal').classList.remove('active');
+        }
+
+        // Helper: Start AI Teaching Video flow from uploaded document
+        async function startTeachingVideo() {
+            closeUploadModal();
+            switchTab('view-curriculum');
+
+            // Get document name from dropdown or localStorage
+            const docSelect = document.getElementById('chat-doc-select');
+            const docName = docSelect && docSelect.selectedIndex > 0
+                ? docSelect.options[docSelect.selectedIndex].textContent.replace(/\s*\(.*\)/, '')
+                : 'Uploaded Document';
+
+            // Auto-fill topic and trigger curriculum generation
+            const input = document.getElementById('curriculum-input');
+            input.value = 'Teach me about ' + docName;
+            document.getElementById('btn-build-curriculum').click();
+        }
+
+        // Auto-fill all tab forms from current lesson/curriculum topic
+        function autoFillTopicFromLesson() {
+            const topic = localStorage.getItem('lesson_topic') || '';
+            if (!topic) return;
+            // Study Planner
+            const spTopic = document.getElementById('sp-topic');
+            if (spTopic && !spTopic.value) spTopic.value = topic;
+            // Revision Mode - use weak concepts if available
+            const weakConcepts = JSON.parse(localStorage.getItem('eduavatar_weak_concepts') || '[]');
+            const revTopic = document.getElementById('rev-topic');
+            if (revTopic && !revTopic.value) revTopic.value = weakConcepts.length > 0 ? weakConcepts.join(', ') : topic;
+            // Concept Map
+            const cmTopic = document.getElementById('cm-topic');
+            if (cmTopic && !cmTopic.value) cmTopic.value = topic;
+            // Coding Demo
+            const cdTopic = document.getElementById('cd-topic');
+            if (cdTopic && !cdTopic.value) cdTopic.value = topic;
+        }
+        autoFillTopicFromLesson();
+
+        // ========== Learning Progress ==========
+        async function loadLearningProgress() {
+            // This is handled by loadRealData() below
+        }
+
+        function startLesson(topic) {
+            window.location.href = `/lesson.html?topic=${encodeURIComponent(topic)}`;
+        }
+
+        // Load progress on page load
+        loadLearningProgress();
+
+        // ========== Upload Modal ==========
+        const btnUpload = document.getElementById('btn-upload');
+        const modal = document.getElementById('upload-modal');
+        const closeModal = document.getElementById('close-modal');
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-upload');
+        const fileList = document.getElementById('file-list');
+        const btnGenerate = document.getElementById('btn-generate');
+        let selectedFiles = [];
+
+        btnUpload.addEventListener('click', () => modal.classList.add('active'));
+        closeModal.addEventListener('click', () => modal.classList.remove('active'));
+        window.addEventListener('click', (e) => { if(e.target === modal) modal.classList.remove('active'); });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            [...files].forEach(file => {
+                selectedFiles.push(file);
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.dataset.name = file.name;
+                item.innerHTML = `<span>📄 ${file.name}</span> <span class="remove-file" onclick="removeFile('${file.name}', this.parentElement)">&times;</span>`;
+                fileList.appendChild(item);
+            });
+        }
+
+        function removeFile(name, el) {
+            selectedFiles = selectedFiles.filter(f => f.name !== name);
+            el.remove();
+        }
+
+        // Real RAG Pipeline
+        btnGenerate.addEventListener('click', async () => {
+            const topicInput = document.getElementById('topic-input');
+            const topic = topicInput ? topicInput.value.trim() : '';
+
+            if (selectedFiles.length === 0 && !topic) {
+                alert('Please upload a file or enter a topic.');
+                return;
+            }
+
+            const modalBody = document.querySelector('.modal-body');
+            modalBody.innerHTML = `
+                <div style="padding: 1rem 0;">
+                    <h3 style="color: var(--clr-highlight); margin-bottom: 1.5rem; display:flex; align-items:center; gap:10px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+                        Processing...
+                    </h3>
+                    <div id="step-1" style="opacity: 0.4; margin-bottom: 12px; font-family: var(--font-accent); font-size: 0.9rem; transition: 0.3s;">[ ] Initializing pipeline...</div>
+                    <div id="step-result" style="display:none; margin-top: 1rem;"></div>
+                </div>
+            `;
+
+            const setStep = (id, text, color) => {
+                const el = document.getElementById(id);
+                if (el) { el.style.opacity = '1'; el.style.color = color || 'var(--clr-highlight)'; el.innerText = text; }
+            };
+
+            try {
+                let topicName = '';
+                if (selectedFiles.length > 0) {
+                    setStep('step-1', '[...] Uploading & vectorizing document...', '#fcd34d');
+                    const result = await EduAPI.processDocument(selectedFiles[0]);
+                    setStep('step-1', `[✓] ${result.message}`);
+                    topicName = selectedFiles[0].name.replace(/\.[^.]+$/, '');
+                    localStorage.setItem('lesson_topic', topicName);
+                } else {
+                    setStep('step-1', '[✓] Topic selected: ' + topic);
+                    topicName = topic;
+                    localStorage.setItem('lesson_topic', topic);
+                }
+
+                document.getElementById('step-result').style.display = 'block';
+                document.getElementById('step-result').innerHTML = `
+                    <p style="color: var(--clr-success); font-weight: 600; margin-bottom: 1.5rem; font-size: 1.1rem;">✅ "${topicName}" is ready!</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <!-- AI Chat Flow -->
+                        <div onclick="closeUploadModal(); switchTab('view-chat')" style="cursor: pointer; background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(124,58,237,0.05)); border: 1px solid rgba(124,58,237,0.3); border-radius: 14px; padding: 1.5rem; text-align: center; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(124,58,237,0.6)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(124,58,237,0.3)'">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">💬</div>
+                            <h4 style="color: white; margin-bottom: 0.4rem; font-size: 1.05rem;">AI Chat</h4>
+                            <p style="color: var(--clr-text-muted); font-size: 0.8rem; margin: 0 0 0.75rem 0;">Ask questions about your document</p>
+                            <div style="font-size: 0.7rem; color: rgba(124,58,237,0.8); background: rgba(124,58,237,0.1); padding: 4px 10px; border-radius: 20px; display: inline-block;">→ Curriculum Generator</div>
+                        </div>
+
+                        <!-- AI Teaching Video Flow -->
+                        <div onclick="startTeachingVideo()" style="cursor: pointer; background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(6,182,212,0.05)); border: 1px solid rgba(6,182,212,0.3); border-radius: 14px; padding: 1.5rem; text-align: center; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(6,182,212,0.6)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(6,182,212,0.3)'">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🎬</div>
+                            <h4 style="color: white; margin-bottom: 0.4rem; font-size: 1.05rem;">AI Teaching Video</h4>
+                            <p style="color: var(--clr-text-muted); font-size: 0.8rem; margin: 0 0 0.75rem 0;">Full structured learning experience</p>
+                            <div style="font-size: 0.7rem; color: rgba(6,182,212,0.8); background: rgba(6,182,212,0.1); padding: 4px 10px; border-radius: 20px; display: inline-block;">→ Curriculum → Lesson → Study → Revision → Maps</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.2rem; padding: 0.8rem; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <p style="color: #94a3b8; font-size: 0.8rem; margin: 0;">💡 <strong>AI Chat:</strong> Quick Q&A about your document. &nbsp;|&nbsp; <strong>AI Teaching Video:</strong> Step-by-step guided learning path.</p>
+                    </div>
+                `;
+            } catch (e) {
+                setStep('step-1', `[✗] Error: ${e.message}`, '#ef4444');
+                localStorage.setItem('lesson_topic', topic || 'General Topic');
+                document.getElementById('step-result').style.display = 'block';
+                document.getElementById('step-result').innerHTML = `
+                    <p style="color: #fcd34d; margin-bottom: 1rem;">Continuing with topic-based lesson...</p>
+                    <button class="cta-btn primary-btn" onclick="window.location.href='/lesson.html'" style="width: 100%;">Start Lesson →</button>
+                `;
+            }
+        });
+
+        // ========== Curriculum Builder ==========
+        document.getElementById('btn-build-curriculum').addEventListener('click', async () => {
+            const topic = document.getElementById('curriculum-input').value.trim();
+            const timeLimit = document.getElementById('time-limit-input').value;
+            if (!topic) return alert('Enter a topic.');
+
+            const btn = document.getElementById('btn-build-curriculum');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+
+            try {
+                const result = await EduAPI.generateCurriculum(topic, timeLimit);
+                const data = result.data;
+                const container = document.getElementById('curriculum-result');
+                container.style.display = 'block';
+
+                // Save curriculum to localStorage for dashboard display
+                const curriculumData = {
+                    topic: topic,
+                    modules: data.modules || [],
+                    duration: data.recommended_total_duration || '',
+                    capstone: data.final_capstone || '',
+                    revision: data.revision_strategy || '',
+                    savedAt: Date.now()
+                };
+                localStorage.setItem('eduavatar_curriculum', JSON.stringify(curriculumData));
+
+                let modulesHtml = '';
+                const completedModules = JSON.parse(localStorage.getItem('eduavatar_completed_modules') || '[]');
+                (data.modules || []).forEach((mod, i) => {
+                    const isCompleted = completedModules.includes(mod.module_title);
+                    const prevCompleted = i === 0 || completedModules.includes((data.modules[i-1] || {}).module_title);
+                    const isUnlocked = isCompleted || prevCompleted;
+                    const dotColor = isCompleted ? '#10b981' : (isUnlocked ? 'var(--clr-highlight)' : 'rgba(255,255,255,0.2)');
+                    const btnClass = isCompleted ? 'success-btn' : (isUnlocked ? 'primary-btn' : 'secondary-btn');
+                    const btnText = isCompleted ? '✓ Completed' : (isUnlocked ? 'Start Module' : 'Locked');
+                    modulesHtml += `
+                        <div style="position: relative; margin-bottom: 2rem; ${!isUnlocked && !isCompleted ? 'opacity: 0.5;' : ''}">
+                            <div style="position: absolute; left: -31px; top: 0; width: 18px; height: 18px; border-radius: 50%; background: ${dotColor}; border: 4px solid var(--clr-bg-main);"></div>
+                            <div class="lesson-card" style="margin: 0;">
+                                <div class="lesson-info">
+                                    <h4 style="${isCompleted ? 'color: #10b981;' : isUnlocked ? 'color: var(--clr-highlight);' : ''}">Module ${mod.module_number}: ${mod.module_title} ${isCompleted ? '✓' : ''}</h4>
+                                    <p>Time: ${mod.estimated_time} • Difficulty: ${mod.difficulty}</p>
+                                    <p style="margin-top: 8px;">Key Concepts: ${(mod.key_concepts || []).join(', ')}</p>
+                                </div>
+                                <button class="cta-btn ${btnClass}" onclick="localStorage.setItem('lesson_topic', '${mod.module_title.replace(/'/g, "\\'")}'); localStorage.setItem('lesson_module_index', '${i}'); window.location.href='/lesson.html'" style="padding: 8px 16px; font-size: 0.9rem;" ${!isUnlocked ? 'disabled' : ''}>${btnText}</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="color: var(--clr-highlight);">Generated Learning Path</h3>
+                        <div style="background: rgba(6,182,212,0.1); color: var(--clr-highlight); padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 0.85rem;">${data.recommended_total_duration || ''}</div>
+                    </div>
+                    <div style="position: relative; padding-left: 30px; margin-bottom: 3rem;">
+                        <div style="position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.1);"></div>
+                        ${modulesHtml}
+                    </div>
+                    ${data.final_capstone ? `
+                    <div style="background: rgba(124, 58, 237, 0.1); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 12px; padding: 1.5rem; margin-top: 1rem;">
+                        <h4 style="color: var(--clr-highlight); margin-bottom: 0.5rem;">Final Capstone Project</h4>
+                        <p style="color: white; font-size: 0.95rem;">${data.final_capstone}</p>
+                    </div>` : ''}
+                    ${data.revision_strategy ? `
+                    <div style="background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); border-radius: 12px; padding: 1.5rem; margin-top: 1rem;">
+                        <h4 style="color: var(--clr-highlight); margin-bottom: 0.5rem;">Revision Strategy</h4>
+                        <p style="color: #cbd5e1; font-size: 0.95rem;">${data.revision_strategy}</p>
+                    </div>` : ''}
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button onclick="localStorage.setItem('lesson_topic', '${(data.modules && data.modules[0] ? data.modules[0].module_title : topic).replace(/'/g, "\\'")}'); localStorage.setItem('lesson_module_index', '0'); window.location.href='/lesson.html'" class="cta-btn primary-btn pulse-glow" style="padding: 12px 32px; font-size: 1rem;">▶ Start First Module</button>
+                    </div>
+                `;
+            } catch (e) {
+                alert('Failed to generate curriculum: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Build Curriculum';
+            }
+        });
+
+        // ========== Visual Designer ==========
+        document.getElementById('btn-build-visuals').addEventListener('click', async () => {
+            const concept = document.getElementById('visuals-input').value.trim();
+            if (!concept) return alert('Enter a concept.');
+
+            const btn = document.getElementById('btn-build-visuals');
+            btn.disabled = true;
+            btn.textContent = 'Designing...';
+
+            try {
+                const result = await EduAPI.generateVisuals(concept);
+                const data = result.data;
+                const container = document.getElementById('visuals-result');
+                container.style.display = 'block';
+                
+                let visualHtml = '';
+
+                // 1. MERMAID DIAGRAM
+                if (data.visual_type === 'mermaid') {
+                    const mId = 'mermaid-dash-' + Date.now();
+                    // Strip markdown code fences and unescape \\n to real newlines
+                    let mermaidCode = (data.data || '').trim();
+                    mermaidCode = mermaidCode.replace(/^```(?:mermaid|flowchart)?\s*/i, '').replace(/```\s*$/i, '').trim();
+                    mermaidCode = mermaidCode.replace(/\\n/g, '\n');
+                    visualHtml = `<div class="mermaid" id="${mId}" style="background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; overflow-x: auto;">${mermaidCode}</div>`;
+                    
+                    setTimeout(() => {
+                        try { mermaid.init(undefined, document.getElementById(mId)); } catch(e) { console.error("Mermaid error", e); }
+                    }, 100);
+                } 
+                // 2. LATEX MATH (CodeCogs)
+                else if (data.visual_type === 'latex') {
+                    const encodedMath = encodeURIComponent(data.data);
+                    visualHtml = `<div style="background: rgba(0,0,0,0.5); padding: 2rem; border-radius: 8px; text-align: center; overflow-x: auto;">
+                                    <img src="https://latex.codecogs.com/svg.latex?\color{white}${encodedMath}" alt="Math Equation" style="max-width: 100%; height: auto;">
+                                  </div>`;
+                } 
+                // 3. AI IMAGE (Pollinations Flux)
+                else {
+                    const imagePrompt = encodeURIComponent(`Educational clear diagram of ${data.concept || concept}, highly detailed: ${data.data || data.description}`);
+                    visualHtml = `<div style="width: 100%; border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
+                                    <img src="https://image.pollinations.ai/prompt/${imagePrompt}?width=800&height=450&nologo=true" style="width: 100%; height: auto; display: block;" onerror="this.parentElement.innerHTML='<span style=\'color: #64748b;\'>Image failed to load</span>'">
+                                  </div>`;
+                }
+
+                container.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="color: var(--clr-highlight);">Generated Visual Blueprint</h3>
+                        <div style="background: rgba(6, 182, 212, 0.1); color: var(--clr-highlight); padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; text-transform: uppercase;">Type: ${data.visual_type || 'AI Generated'}</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="color: white; margin-bottom: 1rem;">${data.concept || concept}</h4>
+                        
+                        <!-- RENDER THE MULTIMODAL VISUAL HERE -->
+                        <div style="margin-bottom: 1.5rem;">
+                            ${visualHtml}
+                        </div>
+
+                        <p style="color: #cbd5e1; line-height: 1.6; margin-bottom: 1rem;">${data.description || data.detailed_description || ''}</p>
+                    </div>
+                `;
+            } catch (e) {
+                alert('Failed to generate visual: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Design Visual';
+            }
+        });
+
+        // ========== Video Director ==========
+        document.getElementById('btn-build-script').addEventListener('click', async () => {
+            const topic = document.getElementById('director-input').value.trim();
+            if (!topic) return alert('Enter a topic.');
+
+            const btn = document.getElementById('btn-build-script');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+
+            try {
+                const result = await EduAPI.generateScript(topic);
+                const data = result.data;
+                const container = document.getElementById('script-result');
+                container.style.display = 'block';
+
+                let segmentsHtml = '';
+                (data.segments || []).forEach((seg, i) => {
+                    const start = `${String(Math.floor((i * 30) / 60)).padStart(2, '0')}:${String((i * 30) % 60).padStart(2, '0')}`;
+                    const end = `${String(Math.floor(((i + 1) * 30) / 60)).padStart(2, '0')}:${String(((i + 1) * 30) % 60).padStart(2, '0')}`;
+                    segmentsHtml += `
+                        <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                                <span style="font-weight: bold; color: white;">Segment ${seg.segment_id || i + 1} [${start} - ${end}]</span>
+                                <span style="color: var(--clr-text-muted); font-size: 0.9rem;">🎥 ${seg.camera_style || 'Medium Shot'}</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                                <div>
+                                    <h4 style="color: var(--clr-highlight); font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase;">Avatar Action</h4>
+                                    <p style="font-size: 0.9rem; color: #a78bfa; margin-bottom: 5px;"><strong>Tone:</strong> ${seg.avatar_emotion_tone || 'Friendly'}</p>
+                                    <p style="font-size: 0.95rem; font-style: italic; color: white;">"${seg.avatar_spoken_text || ''}"</p>
+                                </div>
+                                <div>
+                                    <h4 style="color: var(--clr-highlight); font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase;">On-Screen Visuals</h4>
+                                    <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 5px;"><strong>Type:</strong> ${(seg.visuals && seg.visuals[0] && seg.visuals[0].type) || 'Illustration'}</p>
+                                    <p style="font-size: 0.9rem; color: #cbd5e1;">${(seg.visuals && seg.visuals[0] && seg.visuals[0].description) || (seg.on_screen_text || []).join(', ')}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="color: var(--clr-highlight);">Generated Video Storyboard</h3>
+                        <div style="background: rgba(124,58,237,0.1); color: var(--clr-accent); padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 0.85rem;">${data.total_estimated_duration || ''}</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        ${segmentsHtml}
+                    </div>
+                `;
+            } catch (e) {
+                alert('Failed to generate script: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate Script';
+            }
+        });
+
+        // ========== Interactive Diagram Designer ==========
+        document.getElementById('btn-build-diagram').addEventListener('click', async () => {
+            const topic = document.getElementById('diagram-input').value.trim();
+            const diagramType = document.getElementById('diagram-type-input').value;
+            if (!topic) return alert('Enter a topic.');
+
+            const btn = document.getElementById('btn-build-diagram');
+            btn.disabled = true;
+            btn.textContent = 'Designing...';
+
+            try {
+                const result = await EduAPI.generateInteractiveDiagram(
+                    topic,
+                    diagramType === 'auto' ? undefined : diagramType,
+                    undefined,
+                    'English'
+                );
+                const data = result.data;
+                const container = document.getElementById('diagram-result');
+                container.style.display = 'block';
+
+                // Build components HTML
+                let componentsHtml = '';
+                (data.components || []).forEach(comp => {
+                    const colorMap = { center: 'var(--clr-highlight)', top: '#a78bfa', bottom: '#f97316', left: '#34d399', right: '#f472b6' };
+                    const bgColor = colorMap[comp.position] || 'rgba(255,255,255,0.1)';
+                    const shapeStyle = comp.visual_style === 'diamond'
+                        ? 'transform: rotate(45deg); width: 60px; height: 60px;'
+                        : comp.visual_style === 'circle'
+                        ? 'border-radius: 50%; width: 70px; height: 70px;'
+                        : 'border-radius: 8px; padding: 10px 16px;';
+                    componentsHtml += `
+                        <div class="diagram-component" data-id="${comp.id}" style="display: flex; flex-direction: column; align-items: center; gap: 6px; opacity: 0; transition: all 0.5s ease;">
+                            <div style="background: ${bgColor}22; border: 2px solid ${bgColor}; ${shapeStyle} display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 0.85rem; text-align: center;">
+                                ${comp.visual_style === 'diamond' ? `<span style="transform: rotate(-45deg); display: block; font-size: 0.7rem;">${comp.label}</span>` : comp.label}
+                            </div>
+                            <span style="font-size: 0.75rem; color: var(--clr-text-muted); max-width: 120px; text-align: center;">${comp.description || ''}</span>
+                        </div>
+                    `;
+                });
+
+                // Build interaction timeline
+                let timelineHtml = '';
+                (data.interaction_sequence || []).forEach(step => {
+                    const actionColors = { 'Reveal component': 'var(--clr-highlight)', 'Highlight': '#fcd34d', 'Animate flow': '#34d399', 'Zoom': '#a78bfa', 'Add label': '#f472b6' };
+                    const stepColor = actionColors[step.action] || 'var(--clr-highlight)';
+                    timelineHtml += `
+                        <div class="diagram-step" data-step="${step.step}" data-target="${step.target}" style="display: flex; gap: 1rem; align-items: flex-start; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; border-left: 3px solid ${stepColor}; cursor: pointer; transition: all 0.3s; opacity: 0; transform: translateX(-10px);" onmouseenter="this.style.background='rgba(255,255,255,0.03)'" onmouseleave="this.style.background='rgba(0,0,0,0.2)'">
+                            <div style="min-width: 28px; height: 28px; border-radius: 50%; background: ${stepColor}22; border: 2px solid ${stepColor}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; color: ${stepColor};">${step.step}</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: white; font-size: 0.9rem; margin-bottom: 4px;">${step.action} → ${step.target}</div>
+                                <div style="color: #94a3b8; font-size: 0.85rem; font-style: italic;">"${step.narration}"</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Build connections SVG placeholder
+                let connectionsDesc = (data.connections || []).map(c => `${c.from} → ${c.to} (${c.label || c.style})`).join(', ');
+
+                container.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="color: var(--clr-highlight);">${data.title || topic}</h3>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <div style="background: rgba(6,182,212,0.1); color: var(--clr-highlight); padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 0.85rem;">${data.diagram_type || 'Diagram'}</div>
+                            <div style="background: rgba(124,58,237,0.1); color: var(--clr-accent); padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 0.85rem;">${(data.components || []).length} Components</div>
+                        </div>
+                    </div>
+
+                    <!-- Diagram Canvas -->
+                    <div id="diagram-canvas" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; min-height: 200px; display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; align-items: center; position: relative;">
+                        ${componentsHtml}
+                    </div>
+
+                    <!-- Connections -->
+                    ${connectionsDesc ? `
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                        <h4 style="color: var(--clr-highlight); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem;">Connections</h4>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">${connectionsDesc}</p>
+                    </div>` : ''}
+
+                    <!-- Interaction Sequence -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="color: var(--clr-highlight); font-size: 0.85rem; text-transform: uppercase;">Interaction Sequence</h4>
+                            <button id="btn-play-diagram" class="cta-btn primary-btn" style="padding: 6px 16px; font-size: 0.8rem;">▶ Play All Steps</button>
+                        </div>
+                        <div id="diagram-timeline" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            ${timelineHtml}
+                        </div>
+                    </div>
+
+                    <!-- Full Visual Description -->
+                    ${data.full_visual_description ? `
+                    <div style="background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3); border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="color: var(--clr-accent); margin-bottom: 0.5rem;">Visual Description</h4>
+                        <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">${data.full_visual_description}</p>
+                    </div>` : ''}
+                `;
+
+                // Animate timeline steps appearing
+                const steps = container.querySelectorAll('.diagram-step');
+                steps.forEach((step, i) => {
+                    setTimeout(() => {
+                        step.style.opacity = '1';
+                        step.style.transform = 'translateX(0)';
+                    }, i * 200);
+                });
+
+                // Play All Steps — sequential reveal animation
+                document.getElementById('btn-play-diagram').addEventListener('click', async () => {
+                    const playBtn = document.getElementById('btn-play-diagram');
+                    playBtn.disabled = true;
+                    playBtn.textContent = '⏸ Playing...';
+
+                    const components = container.querySelectorAll('.diagram-component');
+                    const timelineSteps = container.querySelectorAll('.diagram-step');
+
+                    for (let i = 0; i < timelineSteps.length; i++) {
+                        const step = timelineSteps[i];
+                        const targetId = step.dataset.target;
+
+                        // Highlight current step
+                        timelineSteps.forEach(s => s.style.borderLeftColor = 'rgba(255,255,255,0.1)');
+                        step.style.borderLeftColor = 'var(--clr-highlight)';
+                        step.style.background = 'rgba(6,182,212,0.05)';
+
+                        // Reveal/highlight target component
+                        const targetComp = container.querySelector(`.diagram-component[data-id="${targetId}"]`);
+                        if (targetComp) {
+                            targetComp.style.opacity = '1';
+                            targetComp.style.transform = 'scale(1.1)';
+                            targetComp.style.filter = 'drop-shadow(0 0 8px rgba(6,182,212,0.5))';
+                        }
+
+                        // Wait before next step
+                        await new Promise(r => setTimeout(r, 2000));
+
+                        // Remove highlight from target
+                        if (targetComp) {
+                            targetComp.style.transform = 'scale(1)';
+                            targetComp.style.filter = 'none';
+                        }
+                        step.style.background = 'rgba(0,0,0,0.2)';
+                    }
+
+                    playBtn.disabled = false;
+                    playBtn.textContent = '▶ Play All Steps';
+                });
+
+                // Click individual step to reveal that component
+                container.querySelectorAll('.diagram-step').forEach(step => {
+                    step.addEventListener('click', () => {
+                        const targetId = step.dataset.target;
+                        const comp = container.querySelector(`.diagram-component[data-id="${targetId}"]`);
+                        if (comp) {
+                            comp.style.opacity = '1';
+                            comp.style.transform = 'scale(1.1)';
+                            comp.style.filter = 'drop-shadow(0 0 8px rgba(6,182,212,0.5))';
+                            setTimeout(() => {
+                                comp.style.transform = 'scale(1)';
+                                comp.style.filter = 'none';
+                            }, 1500);
+                        }
+                    });
+                });
+
+            } catch (e) {
+                alert('Failed to generate diagram: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Design Diagram';
+            }
+        });
+
+        // ========== Load Analytics on Overview ==========
+        async function loadOverview() {
+            try {
+                const result = await EduAPI.getAnalytics();
+                const a = result.analytics;
+                if (!a) return;
+
+                const statCards = document.querySelectorAll('#view-overview .stat-card .value');
+                if (statCards.length >= 3) {
+                    statCards[0].textContent = a.overall_progress?.total_topics_covered || 0;
+                    statCards[1].innerHTML = `${a.overall_progress?.total_learning_time || '0 hrs'}`;
+                    const trend = a.performance_trend || 'Stable';
+                    statCards[2].innerHTML = `${trend} <span style="font-size: 1rem; font-weight: normal; color: var(--clr-success);">📈</span>`;
+                }
+            } catch (e) {
+                console.warn('Analytics load failed:', e.message);
+            }
+        }
+
+        // ========== Load Profile for Settings ==========
+        async function loadProfile() {
+            try {
+                const result = await EduAPI.getProfile();
+                const p = result.data;
+                if (p) {
+                    // Update settings form
+                    const nameInput = document.querySelector('#view-settings .form-input');
+                    if (nameInput && p.name) nameInput.value = p.name;
+
+                    // Update profile header
+                    const name = p.name || 'Student';
+                    const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    document.getElementById('profile-avatar').textContent = initials;
+                    document.getElementById('profile-name').textContent = `${name}'s Learning Profile`;
+                    document.getElementById('profile-level').textContent = p.overallLevel || 'Intermediate';
+                    document.getElementById('profile-lang').textContent = p.preferredLanguage || 'English';
+                    document.getElementById('profile-pace').textContent = p.learningPreferences?.pace || 'Adaptive';
+                    document.getElementById('profile-last-session').textContent = p.lastSessionDate ? new Date(p.lastSessionDate).toLocaleDateString() : 'Never';
+
+                    // Calculate overall grade
+                    const topics = p.topicsStudied || [];
+                    if (topics.length > 0) {
+                        const avgScore = Math.round(topics.reduce((sum, t) => sum + (t.assessmentScore || 0), 0) / topics.length);
+                        let grade = 'F';
+                        if (avgScore >= 90) grade = 'A+';
+                        else if (avgScore >= 80) grade = 'A';
+                        else if (avgScore >= 70) grade = 'B';
+                        else if (avgScore >= 60) grade = 'C';
+                        else if (avgScore >= 50) grade = 'D';
+                        document.getElementById('profile-overall-grade').textContent = grade;
+                    }
+                }
+            } catch (e) {
+                console.warn('Profile load failed:', e.message);
+            }
+        }
+
+        // ========== Init ==========
+        
+        // ========== Load Dynamic Progress from LocalStorage ==========
+        // ========== Load Real Data from Backend ==========
+        async function loadRealData() {
+            try {
+                // Fetch progress from Backend
+                const result = await EduAPI.getLearningProgress().catch(() => null);
+                
+                let strongConcepts = new Set();
+                let weakConcepts = new Set();
+                let historyHtml = '';
+                let completedCount = 0;
+                let totalScore = 0;
+
+                // We'll also merge with local storage in-progress for instant UI updates
+                const saved = JSON.parse(localStorage.getItem('eduavatar_in_progress'));
+                
+                if (saved) {
+                    // Inject real-time In Progress banner
+                    const pct = saved.percentage || Math.round((saved.index / Math.max(saved.total, 1)) * 100);
+                    document.getElementById('in-progress-title').textContent = saved.topic;
+                    document.getElementById('in-progress-pct').textContent = `${pct}% complete • ${saved.index || 0} of ${saved.total || '?'} concepts`;
+                    
+                    const resumeBtn = document.getElementById('in-progress-btn');
+                    resumeBtn.disabled = false;
+                    resumeBtn.style.opacity = '1';
+                    resumeBtn.style.cursor = 'pointer';
+                    resumeBtn.onclick = () => {
+                        localStorage.setItem('lesson_topic', saved.topic);
+                        window.location.href = '/lesson.html';
+                    };
+
+                    // Update the in-progress banner with progress bar
+                    const banner = document.querySelector('[style*="In Progress"]') || document.getElementById('in-progress-title')?.closest('div')?.parentElement;
+                    const pctEl = document.getElementById('in-progress-pct');
+                    if (pctEl) {
+                        pctEl.innerHTML = `
+                            <div style="margin-bottom: 0.5rem;">${pct}% complete • ${saved.index || 0} of ${saved.total || '?'} concepts</div>
+                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                                <div style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, var(--clr-primary), var(--clr-accent)); border-radius: 3px; transition: width 0.3s;"></div>
+                            </div>
+                        `;
+                    }
+
+                    historyHtml += `
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(124,58,237,0.2); border-left: 4px solid var(--clr-primary); padding: 1.2rem; border-radius: 12px; transition: transform 0.2s ease, background 0.2s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                                <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--clr-text);">${saved.topic}</h4>
+                                <span style="background: rgba(124, 58, 237, 0.15); color: var(--clr-primary); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; border: 1px solid rgba(124,58,237,0.3);">⏳ In Progress (${pct}%)</span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 0.75rem;">
+                                <div style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, var(--clr-primary), var(--clr-accent)); border-radius: 4px;"></div>
+                            </div>
+                            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5;">You paused this lesson. Ready to continue?</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.75rem;">
+                                <button class="cta-btn secondary-btn" style="padding: 6px 16px; font-size: 0.85rem; background: transparent; border: 1px solid var(--clr-primary); color: var(--clr-primary);" onclick="document.getElementById('in-progress-btn').click()">▶ Continue Learning</button>
+                                <span style="font-size: 0.8rem; color: #64748b;">Paused ${saved.timestamp ? new Date(saved.timestamp).toLocaleDateString() : 'recently'}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('in-progress-title').textContent = "No Active Lesson";
+                    document.getElementById('in-progress-pct').textContent = "Start a new topic to see progress here.";
+                    const resumeBtn = document.getElementById('in-progress-btn');
+                    resumeBtn.disabled = true;
+                    resumeBtn.style.opacity = '0.5';
+                    resumeBtn.style.cursor = 'not-allowed';
+                }
+
+                if (result && result.data) {
+                    const data = result.data;
+                    
+                    // Parse Backend History
+                    const allTopics = [...data.completed, ...data.inProgress];
+                    allTopics.sort((a,b) => new Date(b.lastStudied || b.dateStudied) - new Date(a.lastStudied || a.dateStudied));
+                    
+                    if(allTopics.length > 0) {
+                        allTopics.forEach(topic => {
+                            const score = topic.score || topic.assessmentScore || 0;
+                            if (score >= 70) completedCount++;
+                            if (score) totalScore += score;
+                            
+                            (topic.strongConcepts || []).forEach(c => strongConcepts.add(c));
+                            (topic.weakConcepts || []).forEach(c => weakConcepts.add(c));
+
+                            const isComp = score >= 70;
+                            const badge = isComp 
+                                ? `<span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; border: 1px solid rgba(16,185,129,0.3);">✓ Completed</span>`
+                                : `<span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; border: 1px solid rgba(239,68,68,0.3);">Needs Review</span>`;
+                            const border = isComp ? "border-left: 4px solid #10b981;" : "border-left: 4px solid #ef4444;";
+
+                            // Don't duplicate the currently active lesson in history
+                            if (saved && saved.topic === topic.topic) return;
+
+                            historyHtml += `
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); ${border} padding: 1.2rem; border-radius: 12px; transition: transform 0.2s ease, background 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                                        <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--clr-text);">${topic.topic}</h4>
+                                        ${badge}
+                                    </div>
+                                    <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem; font-size: 0.8rem; color: #64748b;">
+                                        <span>📅 ${new Date(topic.dateStudied || topic.lastStudied).toLocaleDateString()}</span>
+                                        <span>⏱️ ${topic.timeSpent || 0} min</span>
+                                        <span>📊 Score: <span style="${isComp ? 'color: #10b981;' : 'color: #ef4444;'}">${topic.score || topic.assessmentScore || 0}/100</span></span>
+                                    </div>
+                                    ${topic.strongConcepts && topic.strongConcepts.length > 0 ? `<div style="margin-bottom: 0.4rem;"><span style="font-size: 0.75rem; color: #10b981; font-weight: 600;">Strong:</span> <span style="font-size: 0.8rem; color: #94a3b8;">${topic.strongConcepts.join(', ')}</span></div>` : ''}
+                                    ${topic.weakConcepts && topic.weakConcepts.length > 0 ? `<div style="margin-bottom: 0.4rem;"><span style="font-size: 0.75rem; color: #ef4444; font-weight: 600;">Weak:</span> <span style="font-size: 0.8rem; color: #94a3b8;">${topic.weakConcepts.join(', ')}</span></div>` : ''}
+                                    ${!isComp ? `<button onclick="localStorage.setItem('lesson_topic','${topic.topic}');window.location.href='/lesson.html'" style="margin-top: 0.5rem; padding: 4px 12px; font-size: 0.8rem; background: transparent; border: 1px solid var(--clr-primary); color: var(--clr-primary); border-radius: 6px; cursor: pointer;">▶ Resume</button>` : ''}
+                                </div>
+                            `;
+                        });
+                    }
+
+                    // Populate Stats
+                    const completedTopics = allTopics.filter(t => (t.score || t.assessmentScore || 0) >= 70);
+                    const inProgressTopics = allTopics.filter(t => (t.score || t.assessmentScore || 0) < 70 && (t.score || t.assessmentScore || 0) > 0);
+                    document.getElementById('stat-topics').textContent = allTopics.length;
+                    document.getElementById('stat-completed').textContent = completedTopics.length;
+                    document.getElementById('stat-inprogress').textContent = inProgressTopics.length;
+                    document.getElementById('stat-score').innerHTML = `${completedCount > 0 ? Math.round(totalScore/completedCount) : 0}<span style="font-size: 1rem; color: #64748b;">/100</span>`;
+                    document.getElementById('stat-time').innerHTML = `${data.stats?.totalMinutes || 0}<span style="font-size: 1rem; color: #64748b;"> min</span>`;
+                    document.getElementById('stat-sessions').textContent = data.stats?.sessionCount || 0;
+
+                    // Populate Progress Bar
+                    const progressPct = allTopics.length > 0 ? Math.round((completedTopics.length / allTopics.length) * 100) : 0;
+                    document.getElementById('progress-pct').textContent = progressPct + '%';
+                    document.getElementById('progress-bar').style.width = progressPct + '%';
+                    document.getElementById('progress-completed').textContent = completedTopics.length;
+                    document.getElementById('progress-inprogress').textContent = inProgressTopics.length;
+
+                    // Populate Topics Table
+                    const tbody = document.getElementById('topics-tbody');
+                    if (allTopics.length > 0) {
+                        tbody.innerHTML = allTopics.map(t => {
+                            const score = t.score || t.assessmentScore || 0;
+                            const isComp = score >= 70;
+                            const statusBadge = isComp 
+                                ? '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:bold;">✓ Done</span>'
+                                : '<span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:bold;">⏳ Learning</span>';
+                            return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td style="padding:0.6rem 0.5rem;color:var(--clr-text);font-weight:500;">${t.topic}</td>
+                                <td style="padding:0.6rem 0.5rem;color:${isComp?'#10b981':'#ef4444'};font-weight:bold;">${score}/100</td>
+                                <td style="padding:0.6rem 0.5rem;color:#94a3b8;">${t.timeSpent || 0} min</td>
+                                <td style="padding:0.6rem 0.5rem;color:#94a3b8;">${new Date(t.dateStudied || t.lastStudied).toLocaleDateString()}</td>
+                                <td style="padding:0.6rem 0.5rem;">${statusBadge}</td>
+                            </tr>`;
+                        }).join('');
+                    }
+
+                    // Populate Knowledge Analysis
+                    if(strongConcepts.size > 0) {
+                        document.getElementById('real-strong-concepts').innerHTML = Array.from(strongConcepts).map(c => `<span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(16,185,129,0.3); font-weight: 500;">${c}</span>`).join('');
+                    }
+                    if(weakConcepts.size > 0) {
+                        document.getElementById('real-weak-concepts').innerHTML = Array.from(weakConcepts).map(c => `<span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(239,68,68,0.3); font-weight: 500;">${c}</span>`).join('');
+                    }
+
+                    // Populate Misconceptions from profile
+                    try {
+                        const profileResult = await EduAPI.getProfile();
+                        if (profileResult && profileResult.data) {
+                            const p = profileResult.data;
+                            if (p.recurringMisconceptions && p.recurringMisconceptions.length > 0) {
+                                document.getElementById('real-misconceptions').innerHTML = p.recurringMisconceptions.map(c => `<span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(245,158,11,0.3); font-weight: 500;">⚠️ ${c}</span>`).join('');
+                            }
+                            // Update stats from profile
+                            if (p.totalLearningTimeMinutes) document.getElementById('stat-time').innerHTML = `${p.totalLearningTimeMinutes} min <span style="font-size: 1rem; color: #06b6d4;">⏱️</span>`;
+                            if (p.sessionCount) document.getElementById('stat-sessions').innerHTML = `${p.sessionCount} <span style="font-size: 1rem; color: #a78bfa;">👤</span>`;
+                        }
+                    } catch(e) { console.warn('Profile load for misconceptions failed:', e.message); }
+
+                    // Populate Learning Path Timeline
+                    let pathHtml = '';
+
+                    // First, show saved curriculum modules if any
+                    const savedCurriculum = JSON.parse(localStorage.getItem('eduavatar_curriculum') || 'null');
+                    if (savedCurriculum && savedCurriculum.modules && savedCurriculum.modules.length > 0) {
+                        const completedModules = JSON.parse(localStorage.getItem('eduavatar_completed_modules') || '[]');
+                        savedCurriculum.modules.forEach((mod, i) => {
+                            const isCompleted = completedModules.includes(mod.module_title);
+                            const isCurrent = !isCompleted && (i === 0 || completedModules.includes(savedCurriculum.modules[i-1]?.module_title));
+                            const dotColor = isCompleted ? '#10b981' : isCurrent ? 'var(--clr-primary)' : 'rgba(255,255,255,0.2)';
+                            const textColor = isCompleted ? '#10b981' : isCurrent ? 'var(--clr-primary)' : '#64748b';
+                            const statusText = isCompleted ? '✓ Completed' : isCurrent ? '▶ In Progress' : '○ Locked';
+                            pathHtml += `
+                            <div style="position: relative; margin-bottom: 1.8rem;">
+                                <div style="position: absolute; left: -32px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: ${dotColor}; border: 3px solid var(--clr-background);${isCurrent ? ' box-shadow: 0 0 12px var(--clr-primary);' : ''}"></div>
+                                <h4 style="font-size: 1rem; color: ${textColor}; font-weight: 600; margin-bottom: 4px;">Module ${mod.module_number}: ${mod.module_title}</h4>
+                                <p style="color: #94a3b8; font-size: 0.8rem;">${mod.estimated_time || ''} • ${mod.difficulty || ''}</p>
+                                <p style="color: ${textColor}; font-size: 0.85rem; font-weight: 500; margin-top: 4px;">${statusText}</p>
+                                ${isCurrent ? `<button onclick="localStorage.setItem('lesson_topic', '${mod.module_title.replace(/'/g, "\\'")}'); localStorage.setItem('lesson_module_index', '${i}'); window.location.href='/lesson.html'" class="cta-btn primary-btn" style="padding: 6px 14px; font-size: 0.8rem; margin-top: 6px;">Continue</button>` : ''}
+                            </div>`;
+                        });
+                    }
+
+                    // Then add any studied topics not in curriculum
+                    allTopics.slice(0, 5).forEach((t, i) => {
+                        // Skip if already shown from curriculum
+                        if (savedCurriculum && savedCurriculum.modules?.some(m => m.module_title === t.topic)) return;
+                        const isComp = t.isCompleted || (t.assessmentScore && t.assessmentScore >= 70);
+                        const isLast = i === allTopics.length - 1;
+                        if(isComp) {
+                            pathHtml += `
+                            <div style="position: relative; margin-bottom: ${isLast ? '0' : '1.8rem'};">
+                                <div style="position: absolute; left: -32px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: #10b981; border: 3px solid var(--clr-background);"></div>
+                                <h4 style="font-size: 1.05rem; color: var(--clr-text); font-weight: 600; margin-bottom: 4px;">${t.topic}</h4>
+                                <p style="color: #10b981; font-size: 0.85rem; font-weight: bold;">✓ Completed • Score: ${t.assessmentScore || 0}%</p>
+                            </div>`;
+                        } else {
+                            pathHtml += `
+                            <div style="position: relative; margin-bottom: ${isLast ? '0' : '1.8rem'};">
+                                <div style="position: absolute; left: -32px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--clr-primary); border: 3px solid var(--clr-background); box-shadow: 0 0 12px var(--clr-primary);"></div>
+                                <h4 style="font-size: 1.05rem; color: var(--clr-primary); font-weight: 600; margin-bottom: 4px;">${t.topic}</h4>
+                                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 8px 0; overflow: hidden;">
+                                    <div style="width: 30%; height: 100%; background: var(--clr-primary); border-radius: 3px;"></div>
+                                </div>
+                                <p style="color: #94a3b8; font-size: 0.85rem;">Needs Review</p>
+                            </div>`;
+                        }
+                    });
+                    
+                    if (pathHtml) {
+                        document.getElementById('real-learning-path').innerHTML = pathHtml;
+                    }
+                }
+                
+                if (historyHtml) {
+                    document.getElementById('real-learning-history').innerHTML = historyHtml;
+                }
+
+            } catch(e) { console.warn('Failed to load real data', e); }
+        }
+        loadRealData();
+        loadProfile();
+
+        // ==========================================
+        // STUDY PLANNER
+        // ==========================================
+        document.getElementById('btn-generate-plan').addEventListener('click', async () => {
+            const topic = document.getElementById('sp-topic').value.trim();
+            const days = parseInt(document.getElementById('sp-days').value);
+            const time = parseInt(document.getElementById('sp-time').value);
+            if (!topic) return alert('Please enter a topic');
+            const btn = document.getElementById('btn-generate-plan');
+            const resultDiv = document.getElementById('sp-result');
+            btn.disabled = true; btn.textContent = 'Generating...';
+            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;">⏳ Generating your personalized study plan...</div>';
+            try {
+                const res = await fetch('http://localhost:3001/api/study-plan', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ topic, durationDays: days, dailyTimeMinutes: time, studentLevel: 'Intermediate', language: 'English' })
+                });
+                const json = await res.json();
+                if (!json.success) throw new Error(json.error);
+                const d = json.data;
+                let html = `<div class="settings-card"><h3 style="margin-bottom:1rem;">${d.plan_title || topic}</h3>
+                    <p style="color:#94a3b8;margin-bottom:0.5rem;">Duration: ${d.total_duration} | Daily: ${d.daily_time_available}</p>`;
+                if (d.daily_schedule) {
+                    html += '<div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1rem;">';
+                    d.daily_schedule.forEach(day => {
+                        html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-left:4px solid var(--clr-primary);padding:1rem;border-radius:8px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
+                                <strong style="color:var(--clr-text);">Day ${day.day} — ${day.focus_topic}</strong>
+                                <span style="color:#64748b;font-size:0.8rem;">${day.date || ''}</span>
+                            </div>
+                            <p style="color:#94a3b8;font-size:0.85rem;margin-bottom:0.5rem;">${(day.learning_goals||[]).join(' • ')}</p>
+                            <p style="color:#64748b;font-size:0.8rem;">Activities: ${(day.activities||[]).join(', ')}</p>
+                        </div>`;
+                    });
+                    html += '</div>';
+                }
+                if (d.success_tips && d.success_tips.length) {
+                    html += '<div style="margin-top:1rem;"><h4 style="color:var(--clr-highlight);margin-bottom:0.5rem;">💡 Tips</h4><ul style="color:#94a3b8;padding-left:1.5rem;">';
+                    d.success_tips.forEach(t => html += `<li style="margin-bottom:0.3rem;">${t}</li>`);
+                    html += '</ul></div>';
+                }
+                html += '</div>';
+                html += `<div style="text-align:center;margin-top:1.5rem;"><button onclick="switchTab('view-curriculum')" class="cta-btn primary-btn" style="padding:10px 24px;">▶ Start Learning (Curriculum)</button></div>`;
+                resultDiv.innerHTML = html;
+            } catch(e) { resultDiv.innerHTML = `<div style="color:#ef4444;padding:1rem;">Error: ${e.message}</div>`; }
+            btn.disabled = false; btn.textContent = 'Generate Study Plan';
+        });
+
+        // ==========================================
+        // REVISION MODE
+        // ==========================================
+        document.getElementById('btn-start-revision').addEventListener('click', async () => {
+            const topic = document.getElementById('rev-topic').value.trim();
+            const btn = document.getElementById('btn-start-revision');
+            const resultDiv = document.getElementById('rev-result');
+            btn.disabled = true; btn.textContent = 'Loading...';
+            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;">⏳ Starting revision session...</div>';
+            try {
+                const res = await fetch('http://localhost:3001/api/revision', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ studentId: 'student1', topic: topic || undefined, language: 'English' })
+                });
+                const json = await res.json();
+                if (!json.success) throw new Error(json.error);
+                const d = json.data;
+                let html = `<div class="settings-card"><h3 style="margin-bottom:1rem;">🔄 ${d.revision_topic || topic || 'Weak Areas'}</h3>`;
+                // Diagnostic Questions
+                if (d.diagnostic_questions && d.diagnostic_questions.length) {
+                    html += '<h4 style="color:var(--clr-highlight);margin-bottom:0.5rem;">📝 Diagnostic Questions</h4>';
+                    d.diagnostic_questions.forEach(q => {
+                        html += `<div style="background:rgba(255,255,255,0.03);padding:0.8rem;border-radius:8px;margin-bottom:0.5rem;border-left:3px solid var(--clr-highlight);">
+                            <p style="color:var(--clr-text);font-size:0.95rem;">${q.question}</p>
+                            <p style="color:#64748b;font-size:0.8rem;">Purpose: ${q.purpose || ''}</p></div>`;
+                    });
+                }
+                // Revision Lessons
+                if (d.revision_lessons && d.revision_lessons.length) {
+                    html += '<h4 style="color:var(--clr-highlight);margin:1rem 0 0.5rem;">📖 Revision Lessons</h4>';
+                    d.revision_lessons.forEach(l => {
+                        html += `<div style="background:rgba(255,255,255,0.03);padding:1rem;border-radius:8px;margin-bottom:0.75rem;border-left:3px solid var(--clr-primary);">
+                            <strong style="color:var(--clr-text);">${l.concept}</strong>
+                            <p style="color:#94a3b8;font-size:0.9rem;margin:0.5rem 0;">${l.concise_explanation || ''}</p>
+                            ${l.analogy ? `<p style="color:#a78bfa;font-size:0.85rem;"><em>Analogy: ${l.analogy}</em></p>` : ''}
+                            ${l.practice_questions ? l.practice_questions.map(pq => `<p style="color:#64748b;font-size:0.85rem;">Q: ${pq.question} → <span style="color:#10b981;">${pq.expected_answer}</span></p>`).join('') : ''}
+                        </div>`;
+                    });
+                }
+                // Flashcards
+                if (d.flashcards && d.flashcards.length) {
+                    html += '<h4 style="color:var(--clr-highlight);margin:1rem 0 0.5rem;">🃏 Flashcards</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">';
+                    d.flashcards.forEach(fc => {
+                        html += `<div style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);padding:0.8rem;border-radius:8px;">
+                            <p style="color:var(--clr-text);font-weight:bold;font-size:0.85rem;">${fc.front}</p>
+                            <p style="color:#94a3b8;font-size:0.8rem;margin-top:0.3rem;">${fc.back}</p></div>`;
+                    });
+                    html += '</div>';
+                }
+                // Mini Assessment
+                if (d.mini_assessment && d.mini_assessment.length) {
+                    html += '<h4 style="color:var(--clr-highlight);margin:1rem 0 0.5rem;">📋 Mini Assessment</h4>';
+                    d.mini_assessment.forEach(q => {
+                        html += `<div style="background:rgba(255,255,255,0.03);padding:0.8rem;border-radius:8px;margin-bottom:0.5rem;border-left:3px solid #10b981;">
+                            <p style="color:var(--clr-text);font-size:0.95rem;">${q.question}</p>
+                            <p style="color:#64748b;font-size:0.8rem;">Type: ${q.type || 'conceptual'}</p></div>`;
+                    });
+                }
+                html += '</div>';
+                html += `<div style="text-align:center;margin-top:1.5rem;"><button onclick="switchTab('view-concept-map')" class="cta-btn primary-btn" style="padding:10px 24px;">▶ Next: Concept Map</button></div>`;
+                resultDiv.innerHTML = html;
+            } catch(e) { resultDiv.innerHTML = `<div style="color:#ef4444;padding:1rem;">Error: ${e.message}</div>`; }
+            btn.disabled = false; btn.textContent = 'Start Revision Session';
+        });
+
+        // ==========================================
+        // CONCEPT MAP
+        // ==========================================
+        document.getElementById('btn-generate-concept-map').addEventListener('click', async () => {
+            const topic = document.getElementById('cm-topic').value.trim();
+            const depth = parseInt(document.getElementById('cm-depth').value);
+            if (!topic) return alert('Please enter a topic');
+            const btn = document.getElementById('btn-generate-concept-map');
+            const resultDiv = document.getElementById('cm-result');
+            btn.disabled = true; btn.textContent = 'Generating...';
+            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;">⏳ Generating concept map...</div>';
+            try {
+                const res = await fetch('http://localhost:3001/api/concept-map', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ topic, depth, language: 'English' })
+                });
+                const json = await res.json();
+                if (!json.success) throw new Error(json.error);
+                const d = json.data;
+                let html = `<div class="settings-card"><h3 style="margin-bottom:1rem;">🗺️ ${d.topic || topic}</h3>`;
+                if (d.central_concept) html += `<p style="color:var(--clr-highlight);margin-bottom:1rem;">Central Concept: <strong>${d.central_concept}</strong></p>`;
+                // Render tree
+                const renderNode = (node, level=0) => {
+                    let h = `<div style="margin-left:${level*20}px;padding:0.6rem;margin-bottom:0.4rem;background:rgba(255,255,255,${0.03 + level*0.01});border-left:3px solid ${level===0?'var(--clr-primary)':level===1?'var(--clr-highlight)':'#10b981'};border-radius:6px;">
+                        <strong style="color:var(--clr-text);font-size:${0.95-level*0.05}rem;">${node.concept || node}</strong>
+                        ${node.relationship ? `<span style="color:#94a3b8;font-size:0.8rem;margin-left:0.5rem;">(${node.relationship})</span>` : ''}
+                    </div>`;
+                    if (node.children) node.children.forEach(c => h += renderNode(c, level+1));
+                    return h;
+                };
+                if (d.map_structure) {
+                    html += '<div style="margin-top:1rem;">';
+                    d.map_structure.forEach(node => html += renderNode(node));
+                    html += '</div>';
+                }
+                if (d.key_relationships && d.key_relationships.length) {
+                    html += '<div style="margin-top:1rem;"><h4 style="color:var(--clr-highlight);margin-bottom:0.5rem;">Key Relationships</h4><ul style="color:#94a3b8;padding-left:1.5rem;">';
+                    d.key_relationships.forEach(r => html += `<li style="margin-bottom:0.3rem;">${r}</li>`);
+                    html += '</ul></div>';
+                }
+                if (d.teaching_notes) html += `<div style="margin-top:1rem;background:rgba(124,58,237,0.1);padding:1rem;border-radius:8px;"><p style="color:#cbd5e1;font-size:0.9rem;">📝 ${d.teaching_notes}</p></div>`;
+                html += '</div>';
+                html += `<div style="text-align:center;margin-top:1.5rem;"><button onclick="switchTab('view-coding')" class="cta-btn primary-btn" style="padding:10px 24px;">▶ Next: Coding Demo</button></div>`;
+                resultDiv.innerHTML = html;
+            } catch(e) { resultDiv.innerHTML = `<div style="color:#ef4444;padding:1rem;">Error: ${e.message}</div>`; }
+            btn.disabled = false; btn.textContent = 'Generate Concept Map';
+        });
+
+        // ==========================================
+        // CODING DEMO
+        // ==========================================
+        document.getElementById('btn-generate-coding').addEventListener('click', async () => {
+            const topic = document.getElementById('cd-topic').value.trim();
+            const lang = document.getElementById('cd-lang').value;
+            const level = document.getElementById('cd-level').value;
+            if (!topic) return alert('Please enter a topic or problem');
+            const btn = document.getElementById('btn-generate-coding');
+            const resultDiv = document.getElementById('cd-result');
+            btn.disabled = true; btn.textContent = 'Generating...';
+            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;">⏳ Generating coding demonstration...</div>';
+            try {
+                const res = await fetch('http://localhost:3001/api/coding-demo', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ topic, language: lang, studentLevel: level })
+                });
+                const json = await res.json();
+                if (!json.success) throw new Error(json.error);
+                const d = json.data;
+                let html = `<div class="settings-card"><h3 style="margin-bottom:0.5rem;">💻 ${d.problem_statement || topic}</h3>
+                    <p style="color:#94a3b8;margin-bottom:1rem;">Language: ${d.language || lang} | Level: ${level}</p>`;
+                // Code blocks
+                if (d.code_blocks && d.code_blocks.length) {
+                    d.code_blocks.forEach(block => {
+                        html += `<div style="margin-bottom:1rem;">
+                            <h4 style="color:var(--clr-highlight);font-size:0.9rem;margin-bottom:0.5rem;">Step ${block.step}: ${block.title}</h4>
+                            <pre style="background:rgba(0,0,0,0.5);padding:1rem;border-radius:8px;overflow-x:auto;color:#10b981;font-size:0.85rem;border:1px solid rgba(255,255,255,0.05);">${block.code || ''}</pre>
+                            <p style="color:#94a3b8;font-size:0.85rem;margin-top:0.5rem;">${block.explanation || ''}</p></div>`;
+                    });
+                }
+                // Final code
+                if (d.final_complete_code) {
+                    html += `<h4 style="color:var(--clr-highlight);margin:1rem 0 0.5rem;">Complete Code</h4>
+                        <pre style="background:rgba(0,0,0,0.5);padding:1rem;border-radius:8px;overflow-x:auto;color:#10b981;font-size:0.85rem;border:1px solid rgba(255,255,255,0.05);">${d.final_complete_code}</pre>`;
+                }
+                // Sample I/O
+                if (d.sample_input) {
+                    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:1rem;">
+                        <div style="background:rgba(0,0,0,0.3);padding:0.8rem;border-radius:8px;"><p style="color:#64748b;font-size:0.8rem;">Input</p><p style="color:var(--clr-text);font-size:0.85rem;">${d.sample_input}</p></div>
+                        <div style="background:rgba(0,0,0,0.3);padding:0.8rem;border-radius:8px;"><p style="color:#64748b;font-size:0.8rem;">Output</p><p style="color:#10b981;font-size:0.85rem;">${d.sample_output}</p></div></div>`;
+                }
+                // Common Errors
+                if (d.common_errors && d.common_errors.length) {
+                    html += '<h4 style="color:var(--clr-highlight);margin:1rem 0 0.5rem;">⚠️ Common Errors</h4>';
+                    d.common_errors.forEach(e => {
+                        html += `<div style="background:rgba(239,68,68,0.1);border-left:3px solid #ef4444;padding:0.8rem;border-radius:6px;margin-bottom:0.5rem;">
+                            <p style="color:#ef4444;font-size:0.85rem;font-weight:bold;">${e.error}</p>
+                            <p style="color:#94a3b8;font-size:0.85rem;">Fix: ${e.fix}</p></div>`;
+                    });
+                }
+                html += '</div>';
+                html += `<div style="text-align:center;margin-top:1.5rem;"><button onclick="switchTab('view-avatar')" class="cta-btn primary-btn" style="padding:10px 24px;">▶ Next: Avatar Video</button></div>`;
+                resultDiv.innerHTML = html;
+            } catch(e) { resultDiv.innerHTML = `<div style="color:#ef4444;padding:1rem;">Error: ${e.message}</div>`; }
+            btn.disabled = false; btn.textContent = 'Generate Coding Demo';
+        });
+
+        // ==========================================
+        // AVATAR STUDIO
+        // ==========================================
+        document.getElementById('btn-generate-avatar').addEventListener('click', async () => {
+            const text = document.getElementById('av-text').value.trim();
+            const voice = document.getElementById('av-voice').value;
+            if (!text) return alert('Please enter text for the avatar to speak');
+            const btn = document.getElementById('btn-generate-avatar');
+            const resultDiv = document.getElementById('av-result');
+            btn.disabled = true; btn.textContent = 'Generating...';
+            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;">⏳ Generating avatar video... this may take 10-30 seconds</div>';
+            try {
+                const res = await fetch('http://localhost:3001/api/generate-avatar', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ text, voice })
+                });
+                const json = await res.json();
+                if (!json.success) throw new Error(json.error);
+                let html = `<div class="settings-card">
+                    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+                        <h3>🎬 Avatar Video Ready</h3>
+                        <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 12px;border-radius:6px;font-size:0.8rem;font-weight:bold;">${json.duration ? json.duration.toFixed(1)+'s' : ''}</span>
+                    </div>
+                    <video controls style="width:100%;border-radius:12px;margin-bottom:1rem;background:#000;">
+                        <source src="http://localhost:3001${json.video_url}" type="video/mp4">
+                        Your browser does not support video.
+                    </video>
+                    <div style="display:flex;gap:1rem;color:#94a3b8;font-size:0.85rem;">
+                        <span>🎤 Voice: ${json.voice || voice}</span>
+                        <span>📦 Size: ${json.file_size ? (json.file_size/1024).toFixed(0)+'KB' : 'N/A'}</span>
+                    </div></div>`;
+                resultDiv.innerHTML = html;
+            } catch(e) { resultDiv.innerHTML = `<div style="color:#ef4444;padding:1rem;">Error: ${e.message}</div>`; }
+            btn.disabled = false; btn.textContent = 'Generate Avatar Video';
+        });
+    </script>
+
+    <!-- ============================================== -->
+    <!-- NEW LESSON & PERSONALIZATION MODAL -->
+    <!-- ============================================== -->
+    <div id="new-lesson-modal" class="video-modal hidden" style="z-index: 100000;">
+        <div class="video-modal-backdrop" id="close-modal-backdrop"></div>
+        <div class="video-modal-content" style="max-width: 700px; padding: 2.5rem; background: var(--clr-background); border: 1px solid rgba(124,58,237,0.3); max-height: 90vh; overflow-y: auto;">
+            <button id="close-lesson-modal" class="close-video-btn">&times;</button>
+            
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Configure Your AI Tutor</h2>
+                <p style="color: var(--clr-text-muted); font-size: 0.95rem;">EduAvatar will adapt completely to your learning profile.</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                
+                <!-- Topic -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--clr-highlight); font-size: 0.9rem; font-weight: bold;">What do you want to learn? (or Upload File) *</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="text" id="config-topic" placeholder="e.g. Quantum Physics, Machine Learning..." style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; outline: none;">
+                        
+                        <input type="file" id="file-upload-input" accept=".pdf,.txt,.docx" style="display: none;">
+                        <button id="btn-trigger-upload" class="cta-btn secondary-btn" style="padding: 0 1rem;">📎 Upload PDF</button>
+
+                    </div>
+                </div>
+
+                <!-- Educational Level -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--clr-text); font-size: 0.9rem;">Educational Level</label>
+                    <select id="config-level" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; outline: none;">
+                        <option value="Beginner (Use simple analogies and fundamental concepts)">Beginner</option>
+                        <option value="Intermediate (Use technical explanations and practical examples)">Intermediate</option>
+                        <option value="Advanced (Use highly technical terms, math, and deep implementation details)">Advanced</option>
+                    </select>
+                </div>
+
+                <!-- Language -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--clr-text); font-size: 0.9rem;">Preferred Language</label>
+                    <select id="config-lang" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; outline: none;">
+                        <option value="English">English</option>
+                        <option value="Hinglish (Mix of Hindi and English)">Hinglish</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Spanish">Spanish</option>
+                    </select>
+                </div>
+
+                <!-- Teaching Style -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--clr-text); font-size: 0.9rem;">Teaching Style</label>
+                    <select id="config-style" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; outline: none;">
+                        <option value="Socratic (Ask me questions to guide me to the answer)">Socratic (Interactive & Questioning)</option>
+                        <option value="Direct (Give me clear, concise, direct answers)">Direct & Concise</option>
+                        <option value="Storytelling (Use narratives and real-world stories)">Storytelling</option>
+                    </select>
+                </div>
+
+                <!-- Available Time -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--clr-text); font-size: 0.9rem;">Available Time</label>
+                    <select id="config-time" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; outline: none;">
+                        <option value="10 minutes">10 Minutes (Quick Overview)</option>
+                        <option value="20 minutes">20 Minutes (Standard Lesson)</option>
+                        <option value="60 minutes">60 Minutes (Deep Dive)</option>
+                    </select>
+                </div>
+
+                <!-- Existing Knowledge -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--clr-text); font-size: 0.9rem;">Existing Knowledge</label>
+                    <input type="text" id="config-knowledge" placeholder="e.g. I know Python loops, but I don't understand classes." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; outline: none;">
+                </div>
+
+                <!-- Learning Objective -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--clr-text); font-size: 0.9rem;">Learning Objective & Desired Depth</label>
+                    <input type="text" id="config-objective" placeholder="e.g. I want to build a machine learning model from scratch." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; outline: none;">
+                </div>
+            </div>
+
+            <!-- Post-Upload Flow Buttons (hidden until PDF is ready) -->
+            <div id="post-upload-flows" style="display:none; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div onclick="closeUploadModal(); switchTab('view-chat')" style="cursor: pointer; background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(124,58,237,0.05)); border: 1px solid rgba(124,58,237,0.3); border-radius: 14px; padding: 1.5rem; text-align: center; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(124,58,237,0.6)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(124,58,237,0.3)'">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">💬</div>
+                    <h4 style="color: white; margin-bottom: 0.4rem; font-size: 1.05rem;">AI Chat</h4>
+                    <p style="color: var(--clr-text-muted); font-size: 0.8rem; margin: 0 0 0.75rem 0;">Ask questions about your document</p>
+                    <div style="font-size: 0.7rem; color: rgba(124,58,237,0.8); background: rgba(124,58,237,0.1); padding: 4px 10px; border-radius: 20px; display: inline-block;">→ Curriculum Generator</div>
+                </div>
+                <div onclick="startTeachingVideo()" style="cursor: pointer; background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(6,182,212,0.05)); border: 1px solid rgba(6,182,212,0.3); border-radius: 14px; padding: 1.5rem; text-align: center; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(6,182,212,0.6)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(6,182,212,0.3)'">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🎬</div>
+                    <h4 style="color: white; margin-bottom: 0.4rem; font-size: 1.05rem;">AI Teaching Video</h4>
+                    <p style="color: var(--clr-text-muted); font-size: 0.8rem; margin: 0 0 0.75rem 0;">Full structured learning experience</p>
+                    <div style="font-size: 0.7rem; color: rgba(6,182,212,0.8); background: rgba(6,182,212,0.1); padding: 4px 10px; border-radius: 20px; display: inline-block;">→ Curriculum → Lesson → Study → Revision → Maps</div>
+                </div>
+            </div>
+
+            <button id="btn-start-personalized-lesson" class="cta-btn primary-btn pulse-glow" style="width: 100%; padding: 14px; font-size: 1.1rem; border-radius: 12px;">Start Personalized Lesson ▶</button>
+        </div>
+    </div>
+
+    <script>
+        // ========== New Lesson Modal Handlers ==========
+        const fileUploadInput = document.getElementById('file-upload-input');
+        const btnTriggerUpload = document.getElementById('btn-trigger-upload');
+        const btnStartPersonalized = document.getElementById('btn-start-personalized-lesson');
+        const configTopic = document.getElementById('config-topic');
+
+        if (btnTriggerUpload && fileUploadInput) {
+            btnTriggerUpload.addEventListener('click', () => fileUploadInput.click());
+            fileUploadInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                configTopic.value = file.name.replace(/\.[^.]+$/, '');
+                try {
+                    btnTriggerUpload.textContent = '⏳ Processing...';
+                    btnTriggerUpload.disabled = true;
+                    const result = await EduAPI.processDocument(file);
+                    if (result.success) {
+                        btnTriggerUpload.textContent = '✅ PDF Ready';
+                        btnTriggerUpload.style.background = 'rgba(16,185,129,0.2)';
+                        btnTriggerUpload.style.color = '#10b981';
+                        btnTriggerUpload.style.borderColor = '#10b981';
+                        // Show the two main flow buttons
+                        const flowBtns = document.getElementById('post-upload-flows');
+                        if (flowBtns) flowBtns.style.display = 'grid';
+                    }
+                } catch(err) {
+                    btnTriggerUpload.textContent = '❌ Error';
+                    console.error('Upload error:', err);
+                }
+                btnTriggerUpload.disabled = false;
+            });
+        }
+
+        if (btnStartPersonalized) {
+            btnStartPersonalized.addEventListener('click', () => {
+                const topic = configTopic.value.trim();
+                if (topic) localStorage.setItem('lesson_topic', topic);
+                window.location.href = '/lesson.html';
+            });
+        }
+
+        // ========== AI Chat Widget ==========
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const chatSendBtn = document.getElementById('chat-send-btn');
+        const chatDocStatus = document.getElementById('chat-doc-status');
+        const chatDocSelect = document.getElementById('chat-doc-select');
+        let chatHistory = [];
+        let activeCollectionId = localStorage.getItem('eduavatar_collection_id') || '';
+
+        // Load documents list
+        async function loadDocuments() {
+            try {
+                const result = await EduAPI.getDocuments();
+                if (result.success && result.documents) {
+                    chatDocSelect.innerHTML = '<option value="">Select a document...</option>';
+                    result.documents.forEach(doc => {
+                        const opt = document.createElement('option');
+                        opt.value = doc.qdrantCollectionId;
+                        const date = new Date(doc.createdAt).toLocaleDateString();
+                        opt.textContent = `${doc.fileName} (${date})`;
+                        chatDocSelect.appendChild(opt);
+                    });
+                    // Auto-select if we have a saved collectionId
+                    if (activeCollectionId) {
+                        chatDocSelect.value = activeCollectionId;
+                        enableChat();
+                    }
+                }
+            } catch (err) {
+                console.warn('Failed to load documents:', err);
+                chatDocStatus.textContent = 'Could not load document list.';
+            }
+        }
+
+        function enableChat() {
+            chatInput.disabled = false;
+            chatSendBtn.disabled = false;
+            const selected = chatDocSelect.options[chatDocSelect.selectedIndex];
+            if (selected && selected.value) {
+                chatDocStatus.textContent = `Chatting with: ${selected.textContent}`;
+                chatDocStatus.style.color = '#10b981';
+            }
+        }
+
+        chatDocSelect.addEventListener('change', () => {
+            const cid = chatDocSelect.value;
+            if (cid) {
+                activeCollectionId = cid;
+                localStorage.setItem('eduavatar_collection_id', cid);
+                enableChat();
+            } else {
+                chatDocStatus.textContent = 'Select a document to start chatting.';
+                chatDocStatus.style.color = '';
+                chatInput.disabled = true;
+                chatSendBtn.disabled = true;
+            }
+        });
+
+        loadDocuments();
+
+        function appendChatMsg(role, text) {
+            // Remove the placeholder if present
+            const placeholder = chatMessages.querySelector('[style*="text-align: center"]');
+            if (placeholder) placeholder.remove();
+
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = role === 'user'
+                ? 'display:flex;justify-content:flex-end;margin-bottom:1rem;'
+                : 'display:flex;justify-content:flex-start;margin-bottom:1rem;';
+
+            const bubble = document.createElement('div');
+            bubble.style.cssText = role === 'user'
+                ? 'background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;padding:12px 16px;border-radius:16px 16px 4px 16px;max-width:80%;font-size:0.95rem;line-height:1.5;white-space:pre-wrap;'
+                : 'background:rgba(255,255,255,0.05);color:white;padding:12px 16px;border-radius:16px 16px 16px 4px;max-width:80%;font-size:0.95rem;line-height:1.5;white-space:pre-wrap;border:1px solid rgba(255,255,255,0.08);';
+
+            const label = document.createElement('div');
+            label.style.cssText = 'font-size:0.75rem;color:rgba(255,255,255,0.5);margin-bottom:4px;';
+            label.textContent = role === 'user' ? 'You' : '🤖 EduAvatar';
+
+            bubble.appendChild(label);
+            const content = document.createElement('div');
+            content.textContent = text;
+            bubble.appendChild(content);
+            wrapper.appendChild(bubble);
+            chatMessages.appendChild(wrapper);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const wrapper = document.createElement('div');
+            wrapper.id = 'chat-typing';
+            wrapper.style.cssText = 'display:flex;justify-content:flex-start;margin-bottom:1rem;';
+            const bubble = document.createElement('div');
+            bubble.style.cssText = 'background:rgba(255,255,255,0.05);padding:12px 16px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);';
+            bubble.innerHTML = '<span style="color:var(--clr-text-muted);font-size:0.9rem;">Thinking<span class="typing-dots">...</span></span>';
+            wrapper.appendChild(bubble);
+            chatMessages.appendChild(wrapper);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('chat-typing');
+            if (el) el.remove();
+        }
+
+        async function sendChatMessage() {
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+
+            // Always use dropdown value directly
+            const selectedCid = chatDocSelect.value;
+            if (selectedCid) {
+                activeCollectionId = selectedCid;
+                localStorage.setItem('eduavatar_collection_id', selectedCid);
+            }
+
+            appendChatMsg('user', msg);
+            chatInput.value = '';
+            chatInput.disabled = true;
+            chatSendBtn.disabled = true;
+            showTypingIndicator();
+
+            try {
+                const result = await EduAPI.chat(msg);
+                removeTypingIndicator();
+                if (result.success) {
+                    appendChatMsg('assistant', result.reply);
+                    chatHistory.push({ role: 'user', content: msg });
+                    chatHistory.push({ role: 'assistant', content: result.reply });
+                } else {
+                    appendChatMsg('assistant', 'Sorry, something went wrong. Please try again.');
+                }
+            } catch (err) {
+                removeTypingIndicator();
+                appendChatMsg('assistant', 'Error: ' + err.message);
+                console.error('Chat error:', err);
+            }
+
+            chatInput.disabled = false;
+            chatSendBtn.disabled = false;
+            chatInput.focus();
+        }
+
+        chatSendBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+
+        // Update chat when upload completes (hook into existing upload flow)
+        const origProcessDoc = EduAPI.processDocument;
+        EduAPI.processDocument = async function(file) {
+            const result = await origProcessDoc.call(EduAPI, file);
+            if (result.success && result.collectionId) {
+                activeCollectionId = result.collectionId;
+                localStorage.setItem('eduavatar_collection_id', result.collectionId);
+                // Refresh document list and auto-select new doc
+                await loadDocuments();
+                chatDocSelect.value = result.collectionId;
+                enableChat();
+            }
+            return result;
+        };
+    </script>
+
+</body>
+</html>

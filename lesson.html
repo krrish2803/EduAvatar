@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Lesson - EduAvatar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            background: var(--clr-bg-main);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Nav */
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: var(--clr-bg-card);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            height: 70px;
+        }
+        .lesson-title { font-weight: 700; font-size: 1.1rem; }
+        .lesson-meta { display: flex; gap: 1.5rem; align-items: center; font-size: 0.9rem; color: var(--clr-text-muted); }
+        .badge-level { background: rgba(6,182,212,0.15); color: var(--clr-highlight); padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
+        
+        /* Main Workspace */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Video Section */
+        .video-panel {
+            flex: 1;
+            border-right: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: #000;
+        }
+        
+        .avatar-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Simulated 3D Avatar Placeholder */
+        .avatar-mock {
+            width: 300px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 70%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            animation: breathe 4s ease-in-out infinite;
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        .avatar-icon { font-size: 8rem; opacity: 0.8; }
+
+        .subtitles {
+            position: absolute;
+            bottom: 30px;
+            left: 5%;
+            right: 5%;
+            text-align: center;
+            background: rgba(0,0,0,0.7);
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .highlight-word { color: var(--clr-highlight); font-weight: bold; }
+
+        /* Whiteboard / Visuals Section */
+        .whiteboard-panel {
+            width: 450px;
+            background: var(--clr-bg-card);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .visual-display {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: linear-gradient(135deg, rgba(255,255,255,0.02), transparent);
+        }
+
+        .code-block {
+            background: #020617;
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-family: var(--font-accent);
+            font-size: 0.9rem;
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #38bdf8;
+            line-height: 1.6;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        /* Interaction Panel */
+        .interaction-panel {
+            height: 250px;
+            padding: 1.5rem;
+            background: var(--clr-bg-main);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .teacher-prompt {
+            margin-bottom: 1rem;
+            font-weight: 500;
+            color: white;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .teacher-prompt span { background: rgba(124,58,237,0.2); padding: 5px; border-radius: 6px; }
+
+        .chat-input-area {
+            margin-top: auto;
+            position: relative;
+        }
+        
+        .chat-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 25px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        .chat-input:focus {
+            border-color: var(--clr-accent);
+            background: rgba(255,255,255,0.08);
+        }
+        .send-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--grad-btn);
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .send-btn:hover { transform: translateY(-50%) scale(1.1); }
+        .send-btn:disabled { background: #333; cursor: not-allowed; opacity: 0.5; }
+
+        .ai-typing {
+            display: flex;
+            gap: 4px;
+            margin-left: 10px;
+            align-items: center;
+            height: 20px;
+        }
+        .ai-typing div {
+            width: 6px; height: 6px; background: var(--clr-highlight); border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .ai-typing div:nth-child(1) { animation-delay: -0.32s; }
+        .ai-typing div:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:false, theme: "dark"});</script>
+</head>
+<body>
+
+    <nav class="lesson-nav">
+        <a href="/dashboard.html" style="color: var(--clr-text-muted); text-decoration: none; display: flex; align-items: center; gap: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Exit Lesson
+        </a>
+        <div class="lesson-title">Introduction to Python Loops</div>
+        <div class="lesson-meta">
+            <span class="badge-level">Beginner</span>
+            <span>Hinglish</span>
+            <span>Time: <strong style="color:white;" id="timer">20:00</strong></span>
+        </div>
+    </nav>
+
+    <div class="workspace">
+        
+        <!-- EduAvatar Video -->
+        <div class="video-panel">
+            <div class="avatar-container">
+                <div class="video-container" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative;">
+                    <!-- The D-ID Video Player -->
+                    <video id="did-video-player" style="width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s;" autoplay playsinline>
+                        <source src="" type="video/mp4">
+                    </video>
+                    
+                    <!-- Loading State / Fallback -->
+                    <div id="video-placeholder" style="position: absolute; display: flex; flex-direction: column; align-items: center;">
+                        <div class="avatar-icon" style="font-size: 5rem;">👩‍🏫</div>
+                        <h3 style="margin-top: 1rem; color: var(--clr-highlight); font-weight: 500;">EduAvatar</h3>
+                        <div class="ai-typing" id="avatar-speaking" style="margin-top: 10px;">
+                            <div></div><div></div><div></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="subtitles" id="subtitles">
+                    Namaste Krrish! Welcome to the lesson. Today we're going to learn about <span class="highlight-word">Python Loops</span>.
+                </div>
+
+                <!-- Lesson Controls -->
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <button id="btn-pause-lesson" class="cta-btn secondary-btn" style="padding: 6px 16px; font-size: 0.85rem;">
+                        ⏸ Pause & Save
+                    </button>
+                    <button id="btn-quit-lesson" class="cta-btn secondary-btn" style="padding: 6px 16px; font-size: 0.85rem; border-color: var(--clr-error); color: var(--clr-error);">
+                        ✕ Quit
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject-Aware Visual & Interaction -->
+        <div class="whiteboard-panel">
+            
+            <div class="visual-display" id="visual-display">
+                <!-- Dynamic Content inserted here -->
+                <h3 style="color: var(--clr-text-muted); margin-bottom: 1rem; font-size: 0.9rem;">WHITEBOARD</h3>
+                <div id="whiteboard-content" style="width: 100%; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <div class="code-block" style="opacity: 0;" id="code-viz">
+                        Waiting for lesson to begin...
+                    </div>
+                </div>
+                <div id="visual-status" style="font-size: 0.75rem; color: var(--clr-text-muted); margin-top: auto; padding-top: 0.5rem;"></div>
+            </div>
+
+            <div class="interaction-panel">
+                <div class="teacher-prompt" id="chat-history">
+                    <span style="font-size: 1.2rem;">👩‍🏫</span>
+                    <div id="teacher-msg">I am analyzing your learning profile...</div>
+                </div>
+                
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="student-input" placeholder="Type your answer here..." disabled>
+                    <button class="send-btn" id="send-btn" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        const subs = document.getElementById('subtitles');
+        const teacherMsg = document.getElementById('teacher-msg');
+        const codeViz = document.getElementById('code-viz');
+        const input = document.getElementById('student-input');
+        const sendBtn = document.getElementById('send-btn');
+        const avatarSpeaking = document.getElementById('avatar-speaking');
+        const videoPlayer = document.getElementById('did-video-player');
+        const placeholder = document.getElementById('video-placeholder');
+        const lessonTitle = document.querySelector('.lesson-title');
+
+        let conversationHistory = [];
+        let currentPhase = 'intro'; // intro, explain, example, question, feedback, next
+        let conceptIndex = 0;
+        let lessonData = null;
+        let questionCount = 0;
+        let quizScore = 0;
+        let quizQuestions = [];
+        let quizIndex = 0;
+        let correctAnswer = '';
+        let lastAnswers = {};
+        const MAX_QUESTIONS = 3;
+        let lessonStartTime = null;
+
+        async function speak(text, generateAvatar, forceConceptForVisual = null) {
+            subs.innerHTML = text;
+            avatarSpeaking.style.display = 'flex';
+            placeholder.style.opacity = '0.3';
+
+            // Fire and forget whiteboard update! Do NOT await it so video starts generating instantly.
+            updateWhiteboard(forceConceptForVisual || text).catch(console.error);
+
+            if (generateAvatar) {
+                try {
+                    const result = await EduAPI.generateAvatar(text.replace(/<[^>]*>/g, ''));
+                    if (result.video_url) {
+                        videoPlayer.src = result.video_url;
+                        videoPlayer.style.opacity = '1';
+                        placeholder.style.opacity = '0';
+                        
+                        // Create a promise that resolves when the video ends
+                        await new Promise((resolve) => {
+                            videoPlayer.onended = () => {
+                                placeholder.style.opacity = '0.3';
+                                videoPlayer.style.opacity = '0';
+                                resolve();
+                            };
+                            videoPlayer.play().catch(e => {
+                                console.warn("Video autoplay blocked:", e);
+                                resolve(); // continue even if autoplay blocked
+                            });
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Avatar generation failed:', e.message);
+                }
+            } else {
+                // If no video, just wait a few seconds based on text length to simulate reading time
+                const readingTime = Math.max(3000, text.length * 50);
+                await new Promise(r => setTimeout(r, readingTime));
+            }
+        }
+
+        // DO NOT AWAIT THIS in the critical path! Let it run in the background.
+        async function updateWhiteboard(conceptText) {
+            const codeViz = document.getElementById('code-viz');
+            const status = document.getElementById('visual-status');
+            
+            const cleanText = conceptText.replace(/<[^>]*>/g, '');
+            const concept = cleanText.length > 60 ? cleanText.substring(0, 60) + '...' : cleanText;
+            
+            status.textContent = 'Generating intelligent visual...';
+            
+            try {
+                const result = await EduAPI.generateVisuals(concept);
+                if (result.data) {
+                    const visual = result.data;
+                    let visualHtml = '';
+
+                    // 1. MERMAID DIAGRAM
+                    if (visual.visual_type === 'mermaid') {
+                        const mId = 'mermaid-' + Date.now();
+                        // Strip markdown code fences and unescape \\n to real newlines
+                        let mermaidCode = (visual.data || '').trim();
+                        mermaidCode = mermaidCode.replace(/^```(?:mermaid|flowchart)?\s*/i, '').replace(/```\s*$/i, '').trim();
+                        mermaidCode = mermaidCode.replace(/\\n/g, '\n');
+                        visualHtml = `<div class="mermaid" id="${mId}" style="background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; overflow-x: auto;">${mermaidCode}</div>`;
+                        
+                        setTimeout(() => {
+                            try { mermaid.init(undefined, document.getElementById(mId)); } catch(e) { console.error("Mermaid error", e); }
+                        }, 100);
+                    } 
+                    // 2. LATEX MATH (CodeCogs)
+                    else if (visual.visual_type === 'latex') {
+                        const encodedMath = encodeURIComponent(visual.data);
+                        visualHtml = `<div style="background: rgba(0,0,0,0.5); padding: 2rem; border-radius: 8px; text-align: center; overflow-x: auto;">
+                                        <img src="https://latex.codecogs.com/svg.latex?\color{white}${encodedMath}" alt="Math Equation" style="max-width: 100%; height: auto;">
+                                      </div>`;
+                    } 
+                    // 3. AI IMAGE (Pollinations Flux)
+                    else {
+                        const imagePrompt = encodeURIComponent(`Educational clear diagram of ${visual.concept}, highly detailed: ${visual.data || visual.description}`);
+                        visualHtml = `<div style="width: 100%; border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
+                                        <img src="https://image.pollinations.ai/prompt/${imagePrompt}?width=800&height=450&nologo=true" style="width: 100%; height: auto; display: block;" onerror="this.parentElement.innerHTML='<span style=\'color: #64748b;\'>Image failed to load</span>'">
+                                      </div>`;
+                    }
+
+                    codeViz.innerHTML = `
+                        <div style="text-align: left; width: 100%;">
+                            <div style="color: var(--clr-highlight); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px;">
+                                ${visual.visual_type === 'mermaid' ? '📊 Flowchart / System Diagram' : visual.visual_type === 'latex' ? '🧮 Mathematical Formula' : '🎨 Educational Illustration'}
+                            </div>
+                            <div style="color: white; font-weight: 600; margin-bottom: 1rem; font-size: 1.1rem;">${visual.concept || concept}</div>
+                            
+                            ${visualHtml}
+
+                            <div style="color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin-top: 1rem;">${visual.description || ''}</div>
+                        </div>
+                    `;
+                    gsap.to(codeViz, { opacity: 1, y: -10, duration: 0.5 });
+                    status.textContent = `Visual: ${visual.visual_type || 'Generated'}`;
+                }
+            } catch (e) {
+                codeViz.innerHTML = `
+                    <div style="text-align: left; width: 100%;">
+                        <div style="color: var(--clr-highlight); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem;">Concept Note</div>
+                        <div style="color: white; font-size: 1.05rem; line-height: 1.6;">${cleanText}</div>
+                    </div>
+                `;
+                gsap.to(codeViz, { opacity: 1, y: -10, duration: 0.5 });
+                status.textContent = 'Concept notes';
+            }
+        }
+
+        async function showCodeDemo(topic) {
+            const codeViz = document.getElementById('code-viz');
+            const status = document.getElementById('visual-status');
+            status.textContent = 'Generating code demo...';
+            
+            try {
+                const result = await EduAPI.generateCodingDemo(topic, 'Python', undefined, 'Beginner');
+                if (result.data) {
+                    const demo = result.data;
+                    const code = demo.final_complete_code || (demo.code_blocks && demo.code_blocks[0] && demo.code_blocks[0].code) || '';
+                    codeViz.innerHTML = `
+                        <div style="text-align: left; width: 100%;">
+                            <div style="color: var(--clr-highlight); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem;">💻 Code Demo</div>
+                            <pre style="color: #86efac; font-size: 0.85rem; white-space: pre-wrap; margin: 0;">${code}</pre>
+                            ${demo.sample_output ? `
+                            <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                                <div style="color: var(--clr-highlight); font-size: 0.75rem;">OUTPUT:</div>
+                                <pre style="color: #fcd34d; font-size: 0.85rem; margin: 0;">${demo.sample_output}</pre>
+                            </div>` : ''}
+                        </div>
+                    `;
+                    gsap.to(codeViz, { opacity: 1, y: -10, duration: 0.5 });
+                    status.textContent = `Code: ${demo.language || 'Python'}`;
+                }
+            } catch (e) {
+                console.warn('Code demo failed:', e.message);
+            }
+        }
+
+        function enableInput(prompt) {
+            avatarSpeaking.style.display = 'none';
+            teacherMsg.innerHTML = '<strong>EduAvatar:</strong> ' + prompt;
+            input.disabled = false;
+            sendBtn.disabled = false;
+            input.placeholder = 'Type your answer here...';
+            input.focus();
+        }
+
+        function disableInput() {
+            input.disabled = true;
+            sendBtn.disabled = true;
+            input.value = '';
+        }
+
+        async function chatWithAI(message) {
+            conversationHistory.push({ role: 'user', content: message });
+            
+            // Build rich personalization profile
+            const prefs = JSON.parse(localStorage.getItem('eduavatar_preferences')) || {};
+            const pLevel = `Level: ${prefs.level || 'Intermediate'}. Style: ${prefs.style || 'Adaptive'}. Goal: ${prefs.objective || 'General understanding'}. Knowledge: ${prefs.knowledge || 'None'}. Time: ${prefs.time || '20 mins'}. Depth: Follow user rules.`;
+            const pLang = prefs.lang || 'English';
+
+            const result = await EduAPI.chat(message, pLevel, pLang);
+            const reply = result.reply;
+            conversationHistory.push({ role: 'assistant', content: reply });
+            return reply;
+        }
+
+        function showVisual(text) {
+            codeViz.innerHTML = `<span style="color: #94a3b8; font-size: 0.9rem;">${text}</span>`;
+            gsap.to(codeViz, { opacity: 1, y: -10, duration: 1 });
+        }
+
+        async function initLesson() {
+            // Load personalization profile
+            const prefs = JSON.parse(localStorage.getItem('eduavatar_preferences')) || {};
+            const topic = prefs.topic || localStorage.getItem('lesson_topic') || 'Introduction to Python Loops';
+            lessonTitle.textContent = topic;
+            lessonStartTime = Date.now(); // Track lesson start time
+            
+            const pLevel = `Level: ${prefs.level || 'Intermediate'}. Style: ${prefs.style || 'Adaptive'}. Goal: ${prefs.objective || 'General understanding'}. Knowledge: ${prefs.knowledge || 'None'}. Time: ${prefs.time || '20 mins'}.`;
+            const pLang = prefs.lang || 'English';
+
+            try {
+                // Check if resuming
+                const saved = JSON.parse(localStorage.getItem('eduavatar_in_progress'));
+                let startPhase = 0;
+                if (saved && saved.topic === topic) {
+                    startPhase = saved.index;
+                }
+
+                await speak(startPhase > 0 ? 'Welcome back! Generating the rest of your lesson...' : 'Analyzing your profile and preparing your custom curriculum...', false);
+                const result = await EduAPI.generateLesson(topic, pLevel, pLang);
+                lessonData = result.data;
+                lessonTitle.textContent = lessonData.lesson_title || topic;
+                conceptIndex = startPhase;
+                questionCount = 0;
+
+                // Start teaching flow
+                await startTeachingFlow();
+            } catch (e) {
+                console.error('Lesson generation failed:', e);
+                await speak(`Let's learn about <span class="highlight-word">${topic}</span> together!`, true);
+                currentPhase = 'chat';
+                enableInput('What would you like to know about this topic?');
+            }
+        }
+
+        async function startTeachingFlow() {
+            if (!lessonData || !lessonData.concepts || lessonData.concepts.length === 0) {
+                await speak('Let me explain this topic to you!', true);
+                currentPhase = 'chat';
+                enableInput('What would you like to know?');
+                return;
+            }
+
+            const concept = lessonData.concepts[conceptIndex];
+            if (!concept) {
+                await finishLesson();
+                return;
+            }
+
+            // PHASE 1: INTRODUCE THE TOPIC
+            currentPhase = 'intro';
+            await speak(
+                `Now let's learn about <span class="highlight-word">${concept.concept_name}</span>.`,
+                true
+            );
+
+            // PHASE 2: EXPLAIN CONCEPTS PROGRESSIVELY
+            currentPhase = 'explain';
+            if (concept.key_points && concept.key_points.length > 0) {
+                for (let i = 0; i < concept.key_points.length; i++) {
+                    await speak(concept.key_points[i], true);
+                    await new Promise(r => setTimeout(r, 500));
+                }
+            }
+
+            // PHASE 3: USE APPROPRIATE EXAMPLES
+            currentPhase = 'example';
+            if (concept.visuals_needed && concept.visuals_needed.length > 0) {
+                showVisual(concept.visuals_needed[0]);
+                await speak(`Here's a visual to help you understand: ${concept.visuals_needed[0]}`, true);
+            }
+
+            // Ask AI for an example
+            try {
+                const exampleReply = await chatWithAI(
+                    `Give me a simple, clear example for: ${concept.concept_name}. Keep it short and easy to understand.`
+                );
+                await speak(exampleReply, true);
+            } catch (e) {
+                console.warn('Could not get example:', e.message);
+            }
+
+            // PHASE 4: ASK QUESTIONS AT SUITABLE POINTS
+            if (concept.question_to_ask && concept.question_to_ask.question && questionCount < MAX_QUESTIONS) {
+                currentPhase = 'question';
+                questionCount++;
+                await speak('Now let me check your understanding...', true);
+                await new Promise(r => setTimeout(r, 1000));
+                enableInput(concept.question_to_ask.question);
+            } else {
+                // No question for this concept, move to next
+                await moveNext();
+            }
+        }
+
+        async function handleStudentAnswer(answer) {
+            disableInput();
+            currentPhase = 'feedback';
+            subs.innerHTML = 'Analyzing your answer...';
+            avatarSpeaking.style.display = 'flex';
+
+            const concept = lessonData.concepts[conceptIndex];
+            const question = concept?.question_to_ask?.question || 'the question';
+
+            try {
+                // PHASE 5 & 6: ANALYZE RESPONSE & CORRECT MISTAKES
+                const feedback = await chatWithAI(
+                    `I asked the student: "${question}"
+                     The student answered: "${answer}"
+                     The correct answer should be related to: ${concept?.concept_name || 'the topic'}
+                     
+                     Please:
+                     1. Tell them if they are correct or incorrect
+                     2. If incorrect, explain WHY it's wrong gently
+                     3. Give the correct answer with a simple explanation
+                     4. Use an analogy if possible
+                     Keep your response under 3 sentences.`
+                );
+
+                await speak(feedback, true);
+
+                // PHASE 7: RE-EXPLAIN DIFFICULT CONCEPTS IF NEEDED
+                const isCorrect = feedback.toLowerCase().includes('correct') ||
+                                  feedback.toLowerCase().includes('right') ||
+                                  feedback.toLowerCase().includes('exactly');
+
+                if (!isCorrect) {
+                    await speak('Let me explain this differently...', true);
+                    try {
+                        const reExplain = await chatWithAI(
+                            `The student misunderstood: ${concept?.concept_name}. 
+                             Previous explanation didn't work. 
+                             Please explain it in a completely different way using a real-life analogy. Keep it under 2 sentences.`
+                        );
+                        await speak(reExplain, true);
+                    } catch (e) {
+                        console.warn('Re-explain failed:', e.message);
+                    }
+                }
+
+                // PHASE 8: ADJUST DIFFICULTY & CONFIRM UNDERSTANDING
+                await speak('Do you understand this concept now? Type "yes" to continue or ask a question.', true);
+                currentPhase = 'confirm';
+                enableInput('Type "yes" to continue or ask a question:');
+
+            } catch (e) {
+                console.error('Feedback failed:', e);
+                await speak('Good effort! Let me continue with the lesson.', true);
+                await moveNext();
+            }
+        }
+
+        async function handleConfirmation(answer) {
+            disableInput();
+            const lower = answer.toLowerCase().trim();
+
+            if (lower === 'yes' || lower === 'y' || lower === 'got it' || lower === 'understood') {
+                // PHASE 9: CONFIRM UNDERSTANDING - MOVE FORWARD
+                await moveNext();
+            } else if (lower === 'no' || lower === 'n' || lower === 'not really') {
+                // Re-explain
+                const concept = lessonData.concepts[conceptIndex];
+                await speak('No worries! Let me explain it again differently...', true);
+                try {
+                    const reExplain = await chatWithAI(
+                        `The student still doesn't understand: ${concept?.concept_name}. 
+                         Please explain using a completely different approach — maybe a story, analogy, or simpler words.`
+                    );
+                    await speak(reExplain, true);
+                } catch (e) {
+                    console.warn('Re-explain failed:', e.message);
+                }
+                await speak('Type "yes" when you\'re ready to move on, or ask me a question.', true);
+                currentPhase = 'confirm';
+                enableInput('Type "yes" to continue or ask a question:');
+            } else {
+                // Student asked a question
+                subs.innerHTML = 'Thinking...';
+                avatarSpeaking.style.display = 'flex';
+                try {
+                    const reply = await chatWithAI(answer);
+                    await speak(reply, true);
+                } catch (e) {
+                    console.warn('Chat failed:', e.message);
+                }
+                await speak('Type "yes" when you\'re ready to continue.', true);
+                currentPhase = 'confirm';
+                enableInput('Type "yes" to continue or ask a question:');
+            }
+        }
+
+        async function moveNext() {
+            conceptIndex++;
+            if (conceptIndex < lessonData.concepts.length) {
+                await speak('Great! Let\'s move to the next concept.', true);
+                await new Promise(r => setTimeout(r, 1000));
+                await startTeachingFlow();
+            } else {
+                await finishLesson();
+            }
+        }
+
+        async function finishLesson() {
+            currentPhase = 'assessment';
+            await speak(
+                `Great job completing the lesson on <span class="highlight-word">${lessonData.lesson_title}</span>! Now let's test your understanding with a comprehensive quiz.`,
+                true
+            );
+
+            // Generate 15-question assessment quiz
+            try {
+                const quizResult = await chatWithAI(
+                    `Generate a 15-question quiz about: ${lessonData.lesson_title}. 
+                     Cover all concepts taught: ${lessonData.concepts?.map(c => c.concept_name).join(', ') || 'all topics'}.
+                     Format as JSON: {"questions": [{"q": "question text", "options": ["A", "B", "C", "D"], "correct": "A", "concept": "topic area"}]}
+                     Make questions varied: easy (4), medium (6), hard (5). Include conceptual, factual, and application questions.`
+                );
+                
+                let quiz;
+                try {
+                    const jsonMatch = quizResult.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        quiz = JSON.parse(jsonMatch[0]);
+                    }
+                } catch (e) {
+                    console.warn('Quiz parse failed:', e.message);
+                }
+
+                if (quiz && quiz.questions && quiz.questions.length > 0) {
+                    quizQuestions = quiz.questions;
+                    await presentQuiz(quiz.questions);
+                } else {
+                    await finishWithReport();
+                }
+            } catch (e) {
+                console.error('Quiz generation failed:', e);
+                await finishWithReport();
+            }
+        }
+
+        async function presentQuiz(questions, questionIndex = 0) {
+            if (questionIndex >= questions.length) {
+                await finishWithReport();
+                return;
+            }
+
+            const q = questions[questionIndex];
+            const optionsText = q.options.map((opt, i) => `${String.fromCharCode(65+i)}) ${opt}`).join('  ');
+            const progressPct = Math.round((questionIndex / questions.length) * 100);
+            
+            currentPhase = 'quiz';
+            quizQuestions = questions;
+            quizIndex = questionIndex;
+            correctAnswer = q.correct;
+
+            // Show visual quiz card with progress
+            teacherMsg.innerHTML = `
+                <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(124,58,237,0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span style="color: #a78bfa; font-weight: bold;">📝 Quiz</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">Question ${questionIndex + 1} of ${questions.length}</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-bottom: 1rem; overflow: hidden;">
+                        <div style="width: ${progressPct}%; height: 100%; background: linear-gradient(90deg, #7c3aed, #a78bfa); border-radius: 3px; transition: width 0.3s;"></div>
+                    </div>
+                    <p style="color: white; font-size: 1.05rem; margin-bottom: 1rem; line-height: 1.5;">${q.q}</p>
+                    <div style="display: grid; gap: 0.5rem;">
+                        ${q.options.map((opt, i) => `
+                            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.8rem 1rem; color: white; cursor: default;">
+                                <strong style="color: #a78bfa;">${String.fromCharCode(65+i)})</strong> ${opt}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 1rem; text-align: center;">Type your answer (A, B, C, or D):</p>
+                </div>
+            `;
+        }
+
+        async function handleQuizAnswer(answer) {
+            disableInput();
+            const upper = answer.toUpperCase().trim();
+            const isCorrect = upper === correctAnswer;
+            const q = quizQuestions[quizIndex];
+            
+            // Track answer for weak area detection
+            lastAnswers[quizIndex] = upper;
+            
+            if (isCorrect) {
+                quizScore++;
+                teacherMsg.innerHTML = `
+                    <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 1.5rem; text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">✅</div>
+                        <p style="color: #10b981; font-size: 1.1rem; font-weight: bold;">Correct! Well done!</p>
+                        <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.5rem;">Score: ${quizScore}/${quizIndex + 1}</p>
+                    </div>
+                `;
+            } else {
+                teacherMsg.innerHTML = `
+                    <div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 12px; padding: 1.5rem;">
+                        <div style="text-align: center; margin-bottom: 0.5rem;">
+                            <div style="font-size: 2rem;">❌</div>
+                            <p style="color: #ef4444; font-size: 1.1rem; font-weight: bold;">Not quite. Correct answer: ${correctAnswer}</p>
+                        </div>
+                        <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.5rem;">Score: ${quizScore}/${quizIndex + 1}</p>
+                    </div>
+                `;
+            }
+
+            // Move to next question after 2s
+            await new Promise(r => setTimeout(r, 2000));
+            await presentQuiz(quizQuestions, quizIndex + 1);
+        }
+
+        async function finishWithReport() {
+            currentPhase = 'done';
+            const totalQuestions = quizQuestions?.length || 1;
+            const percentage = Math.round((quizScore / Math.max(totalQuestions, 1)) * 100);
+            
+            // Identify weak areas from wrong answers
+            const weakConcepts = [];
+            const strongConcepts = [];
+            quizQuestions?.forEach((q, i) => {
+                if (q.correct !== lastAnswers?.[i]) {
+                    if (q.concept) weakConcepts.push(q.concept);
+                } else {
+                    if (q.concept) strongConcepts.push(q.concept);
+                }
+            });
+
+            // Mark curriculum module as completed if passed (score >= 80%)
+            const currentTopic = lessonData?.lesson_title || localStorage.getItem('lesson_topic');
+            if (currentTopic && percentage >= 80) {
+                const completed = JSON.parse(localStorage.getItem('eduavatar_completed_modules') || '[]');
+                if (!completed.includes(currentTopic)) {
+                    completed.push(currentTopic);
+                    localStorage.setItem('eduavatar_completed_modules', JSON.stringify(completed));
+                }
+            }
+
+            // Save weak areas for revision
+            if (weakConcepts.length > 0) {
+                localStorage.setItem('eduavatar_weak_concepts', JSON.stringify([...new Set(weakConcepts)]));
+            }
+
+            // Save progress to backend
+            try {
+                const startTime = lessonStartTime || Date.now();
+                const timeSpent = Math.round((Date.now() - startTime) / 60000); // minutes
+                const weakAreas = quizQuestions?.filter((q, i) => {
+                    // Identify weak areas from wrong answers
+                    return true; // Will be populated by quiz tracking
+                }).map(q => q.topic) || [];
+
+                await EduAPI.saveProgress(
+                    lessonData.lesson_title,
+                    percentage,
+                    timeSpent,
+                    lessonData.concepts?.slice(0, 3) || [],
+                    weakAreas
+                );
+            } catch (e) {
+                console.warn('Failed to save progress:', e.message);
+            }
+
+            await speak(
+                `Quiz complete! You scored ${quizScore} out of ${quizQuestions?.length || 0} (${percentage}%). ` +
+                (percentage >= 80 ? 'Excellent work!' : percentage >= 50 ? 'Good effort!' : 'Keep practicing, you\'ll improve!'),
+                true
+            );
+
+            // Generate learning report
+            try {
+                const report = await chatWithAI(
+                    `Generate a brief learning report for a student who just completed a lesson on: ${lessonData.lesson_title}.
+                     They scored ${percentage}% on the quiz.
+                     Include: 1) What they learned well, 2) What needs review, 3) Next recommended topic.
+                     Keep it to 3-4 sentences.`
+                );
+                await speak(report, true);
+            } catch (e) {
+                console.warn('Report failed:', e.message);
+            }
+
+            // Show revision reminder
+            await speak('I recommend revisiting this topic in 3 days for better retention.', true);
+
+            // Show visual score card with buttons
+            const scoreColor = percentage >= 80 ? '#10b981' : percentage >= 50 ? '#f59e0b' : '#ef4444';
+            const verdict = percentage >= 80 ? 'Excellent! You passed!' : percentage >= 50 ? 'Good effort! Room to improve.' : 'Needs improvement. Let\'s review.';
+            const moduleIndex = parseInt(localStorage.getItem('lesson_module_index') || '0');
+
+            teacherMsg.innerHTML = `
+                <div style="background: rgba(0,0,0,0.4); border-radius: 16px; padding: 2rem; border: 2px solid ${scoreColor}; text-align: center;">
+                    <div style="font-size: 4rem; font-weight: bold; color: ${scoreColor};">${quizScore}/${quizQuestions?.length || 0}</div>
+                    <div style="font-size: 1.5rem; color: white; margin: 0.5rem 0;">Score: ${percentage}%</div>
+                    <div style="color: ${scoreColor}; font-size: 1.1rem; margin: 1rem 0;">${verdict}</div>
+                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap;">
+                        ${percentage < 80 ? `
+                            <button onclick="window.location.href='/lesson.html'" style="padding: 12px 24px; border-radius: 8px; border: none; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-size: 1rem; cursor: pointer; font-weight: bold;">🔄 Revision Mode — Retake Lesson</button>
+                        ` : ''}
+                        <button onclick="localStorage.removeItem('lesson_topic'); window.location.href='/dashboard.html'" style="padding: 12px 24px; border-radius: 8px; border: none; background: linear-gradient(135deg, #10b981, #059669); color: white; font-size: 1rem; cursor: pointer; font-weight: bold;">${percentage >= 80 ? '✅ View Dashboard' : '📊 Go to Dashboard'}</button>
+                    </div>
+                </div>
+            `;
+
+            currentPhase = 'done';
+        }
+
+        async function sendChatMessage() {
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            disableInput();
+            teacherMsg.innerHTML = `You: <em>"${msg}"</em>`;
+
+            if (currentPhase === 'question') {
+                await handleStudentAnswer(msg);
+            } else if (currentPhase === 'quiz') {
+                await handleQuizAnswer(msg);
+            } else if (currentPhase === 'confirm') {
+                await handleConfirmation(msg);
+            } else if (currentPhase === 'done') {
+                if (msg.toLowerCase() === 'restart') {
+                    conceptIndex = 0;
+                    questionCount = 0;
+                    conversationHistory = [];
+                    quizScore = 0;
+                    await initLesson();
+                } else if (msg.toLowerCase() === 'revision') {
+                    await startRevisionSession();
+                } else {
+                    subs.innerHTML = 'Thinking...';
+                    avatarSpeaking.style.display = 'flex';
+                    try {
+                        const reply = await chatWithAI(msg);
+                        await speak(reply, true);
+                    } catch (e) {
+                        await speak('Sorry, I had trouble connecting.', true);
+                    }
+                    enableInput('Ask another question or type "revision":');
+                }
+            } else {
+                // General chat during lesson
+                subs.innerHTML = 'Thinking...';
+                avatarSpeaking.style.display = 'flex';
+                try {
+                    const reply = await chatWithAI(msg);
+                    await speak(reply, true);
+                } catch (e) {
+                    await speak('Sorry, I had trouble connecting.', true);
+                }
+                enableInput('Continue the lesson or ask a question:');
+            }
+        }
+
+        async function startRevisionSession() {
+            currentPhase = 'revision';
+            await speak('Starting a revision session based on your weak areas...', true);
+            
+            try {
+                const result = await EduAPI.startRevision(lessonData.lesson_title);
+                if (result.data) {
+                    const revision = result.data;
+                    if (revision.revision_lessons && revision.revision_lessons.length > 0) {
+                        for (const lesson of revision.revision_lessons) {
+                            await speak(`Revising: ${lesson.concept}. ${lesson.concise_explanation}`, true);
+                            if (lesson.strong_example) {
+                                await speak(`Example: ${lesson.strong_example}`, true);
+                            }
+                        }
+                    }
+                    if (revision.flashcards && revision.flashcards.length > 0) {
+                        await speak('Here are some flashcards for quick review:', true);
+                        for (const card of revision.flashcards.slice(0, 3)) {
+                            await speak(`${card.front} → ${card.back}`, true);
+                        }
+                    }
+                }
+                await speak('Revision complete! Keep up the great work!', true);
+            } catch (e) {
+                console.error('Revision failed:', e);
+                await speak('Revision session encountered an issue. Keep practicing!', true);
+            }
+            
+            currentPhase = 'done';
+            enableInput('Type "restart" for a new lesson or ask a question:');
+        }
+
+        sendBtn.addEventListener('click', sendChatMessage);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+
+        // Timer
+        let time = 20 * 60;
+        setInterval(() => {
+            time--;
+            const m = Math.floor(time / 60).toString().padStart(2, '0');
+            const s = (time % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${m}:${s}`;
+        }, 1000);
+
+        // Start lesson on load
+        
+        // --- Pause & Save Logic ---
+        const pauseBtn = document.getElementById('btn-pause-lesson');
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', async () => {
+                if (videoPlayer) videoPlayer.pause();
+                const topic = lessonData?.lesson_title || localStorage.getItem('lesson_topic') || 'Unknown Topic';
+                const totalConcepts = lessonData?.concepts?.length || 4;
+                const completedConcepts = conceptIndex || 0;
+                const percentage = Math.round((completedConcepts / Math.max(totalConcepts, 1)) * 100);
+
+                // Save to localStorage for instant dashboard update
+                const progress = {
+                    topic: topic,
+                    index: completedConcepts,
+                    total: totalConcepts,
+                    percentage: percentage,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('eduavatar_in_progress', JSON.stringify(progress));
+
+                // Save to backend DB
+                try {
+                    const timeSpent = lessonStartTime ? Math.round((Date.now() - lessonStartTime) / 60000) : 5;
+                    await EduAPI.saveProgress(
+                        topic,
+                        percentage, // score = completion percentage
+                        timeSpent,
+                        lessonData?.concepts?.slice(0, completedConcepts).map(c => c.concept_name) || [],
+                        lessonData?.concepts?.slice(completedConcepts).map(c => c.concept_name) || []
+                    );
+                } catch (e) {
+                    console.warn('Failed to save progress to backend:', e.message);
+                }
+                
+                await speak(`Lesson paused at ${percentage}% complete. You can resume from your dashboard.`, false);
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 2000);
+            });
+        }
+
+        // --- Quit Logic ---
+        const quitBtn = document.getElementById('btn-quit-lesson');
+        if (quitBtn) {
+            quitBtn.addEventListener('click', () => {
+                if (videoPlayer) videoPlayer.pause();
+                window.location.href = '/dashboard.html';
+            });
+        }
+
+        setTimeout(initLesson, 500);
+    </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+/* Accessibility styles - placeholder */
+:focus-visible {
+    outline: 2px solid #06b6d4;
+    outline-offset: 2px;
+}

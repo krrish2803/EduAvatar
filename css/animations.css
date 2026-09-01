@@ -1,0 +1,39 @@
+/* Keyframe Animations */
+
+@keyframes pulseGlow {
+    0% {
+        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 25px rgba(124, 58, 237, 0.6);
+    }
+    100% {
+        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    }
+}
+
+.pulse-glow {
+    animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* Subtle continuous animations for icons */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0px); }
+}
+
+.icon-wrapper {
+    animation: float 4s ease-in-out infinite;
+}
+
+.passive-icon { animation-delay: 0s; }
+.feedback-icon { animation-delay: 1s; }
+.pace-icon { animation-delay: 2s; }
+.lang-icon { animation-delay: 3s; }
+
+/* Used for elements controlled by JS */
+.hidden-scroll {
+    opacity: 0;
+    visibility: hidden;
+}
