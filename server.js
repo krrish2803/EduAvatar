@@ -1520,11 +1520,11 @@ app.post('/api/generate-avatar', async (req, res) => {
 
         console.log(`[Avatar] Generating video for: "${text.substring(0, 50)}..."`);
 
-        // Step 1: Generate TTS audio using edge-tts (async, non-blocking)
+        // Step 1: Generate TTS audio using edge-tts-node (async, non-blocking)
         console.log(`[Avatar] Step 1: Generating TTS audio...`);
         const safeText = sanitizeForShell(text);
         const { stdout: ttsResult } = await execAsync(
-            `python3 "${path.join(avatarDir, 'tts.py')}" "${safeText}" "${audioPath}" "${voice}"`,
+            `node "${path.join(avatarDir, 'tts.js')}" "${safeText}" "${audioPath}" "${voice}"`,
             { timeout: 30000 }
         );
         const ttsData = JSON.parse(ttsResult.trim());
