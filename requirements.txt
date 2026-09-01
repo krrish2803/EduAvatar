@@ -1,0 +1,2 @@
+edge-tts
+pdf-parse
