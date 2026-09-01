@@ -90,7 +90,15 @@ const PROMPTS = {
 const app = express();
 
 // CORS Security
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3001'] }));
+app.use(cors({
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:8080',
+        'http://localhost:3001',
+        'https://eduavatar.netlify.app',
+        process.env.RENDER_EXTERNAL_URL
+    ].filter(Boolean)
+}));
 app.use(express.json());
 
 // Static file serving (HTML, CSS, JS, images)

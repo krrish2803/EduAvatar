@@ -1,4 +1,6 @@
-const API_BASE = 'http://localhost:3001';
+const API_BASE = window.location.hostname === 'localhost'
+    ? 'http://localhost:3001'
+    : 'https://eduavatar.onrender.com';
 const STUDENT_ID = localStorage.getItem('eduavatar_student_id') || 'student_default';
 
 function setStudentId(id) {
