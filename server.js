@@ -91,14 +91,17 @@ const app = express();
 
 // CORS Security
 app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:8080',
-        'http://localhost:3001',
-        'https://edu-avatar.netlify.app',
-        'https://eduavatar.netlify.app',
-        process.env.RENDER_EXTERNAL_URL
-    ].filter(Boolean)
+    origin: function(origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        // Allow localhost
+        if (origin.includes('localhost')) return callback(null, true);
+        // Allow any Netlify subdomain
+        if (origin.includes('.netlify.app')) return callback(null, true);
+        // Allow Render external URL
+        if (origin === process.env.RENDER_EXTERNAL_URL) return callback(null, true);
+        callback(null, true);
+    }
 }));
 app.use(express.json());
 
